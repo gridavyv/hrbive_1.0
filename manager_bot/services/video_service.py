@@ -120,7 +120,7 @@ async def download_incoming_video_locally(update: Update, context: ContextTypes.
         logger.info(f"download_incoming_video_locally: video_dir_path={video_dir_path}")
 
         if video_dir_path is None:
-            logger.error(f"Video directory path for managers not found. Bot user id: {bot_user_id}, vacancy id: {target_vacancy_id}")
+            logger.error(f"download_incoming_video_locally:Video directory path for managers not found. Bot user id: {bot_user_id}, vacancy id: {target_vacancy_id}")
             raise ValueError(f"Video directory path for managers not found for bot user id: {bot_user_id}, vacancy id: {target_vacancy_id}")
 
         # Generate unique filename with appropriate extension
@@ -131,48 +131,49 @@ async def download_incoming_video_locally(update: Update, context: ContextTypes.
             filename = f"manager_{bot_user_id}_vacancy_{target_vacancy_id}_time_{timestamp}.mp4"
 
         video_file_path = video_dir_path / filename
-        logger.info(f"Video file path: {video_file_path}")
+        logger.info(f"download_incoming_video_locally: Video file path: {video_file_path}")
 
         # Download the file
         if not tg_file_id:
-            raise ValueError("Telegram file identifier is empty.")
+            raise ValueError("download_incoming_video_locally: Telegram file identifier is empty.")
 
         try:
             tg_file = await context.bot.get_file(tg_file_id)
         except Exception as fetch_error:
-            raise RuntimeError(f"Failed to fetch Telegram file: {fetch_error}") from fetch_error
+            raise RuntimeError(f"download_incoming_video_locally: Failed to fetch Telegram file: {fetch_error}") from fetch_error
 
         await tg_file.download_to_drive(custom_path=str(video_file_path))
-        logger.info(f"Video file downloaded to: {video_file_path}")
+        logger.info(f"download_incoming_video_locally: Video file downloaded to: {video_file_path}")
 
         # Update user records with video received and video path
         update_user_records_with_top_level_key(record_id=bot_user_id, key="vacancy_video_received", value="yes")
-        update_user_records_with_top_level_key(record_id=bot_user_id, key="vacancy_video_path", value=video_file_path)
+        update_user_records_with_top_level_key(record_id=bot_user_id, key="vacancy_video_path", value=str(video_file_path))
+        logger.info(f"download_incoming_video_locally: User records updated with video received and video path")
 
         # Clear pending video data from context object
         _clear_pending_video_data_from_context_object(context=context)
-        logger.debug(f"Pending video data cleared from context object")
+        logger.info(f"download_incoming_video_locally: Pending video data cleared from context object")
         
         # Verify the file was created successfully
         if video_file_path.exists():
-            logger.info(f"Video file exists, calling read_vacancy_description_command")
+            logger.info(f"download_incoming_video_locally: Video file exists, calling read_vacancy_description_command")
             
             from manager_bot import read_vacancy_description_command
 
             # ----- READ VACANCY DESCRIPTION -----
             try:
                 await read_vacancy_description_command(update=update, context=context)
-                logger.info(f"read_vacancy_description_command completed successfully")
+                logger.info(f"download_incoming_video_locally: read_vacancy_description_command completed successfully")
             except Exception as read_err:
-                logger.error(f"Failed to call read_vacancy_description_command: {read_err}", exc_info=True)
+                logger.error(f"download_incoming_video_locally: Failed to call read_vacancy_description_command: {read_err}", exc_info=True)
                 raise
 
         else:
-            logger.error(f"Video file not created after download: {video_file_path}")
+            logger.error(f"download_incoming_video_locally: Video file not created after download: {video_file_path}")
             await send_message_to_user(update, context, text="Ошибка при скачивании видео. Пришлите заново, пожалуйста.")
-            raise FileNotFoundError(f"Video file was not created at {video_file_path}")
+            raise FileNotFoundError(f"download_incoming_video_locally: Video file was not created at {video_file_path}")
 
     except Exception as e:
-        logger.error(f"Failed to download video: {str(e)}", exc_info=True)
+        logger.error(f"download_incoming_video_locally: Failed to download video: {str(e)}", exc_info=True)
         raise
 
