@@ -2241,8 +2241,9 @@ def create_manager_application(token: str) -> Application:
     )
     # Handler for feedback messages (text only, when waiting_for_feedback flag is set)
     # This handler must be added AFTER menu buttons handler to avoid conflicts
+    # Exclude commands (~filters.COMMAND) so command handlers can process them first
     application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.Regex(menu_buttons_pattern), handle_feedback_message)
+        MessageHandler(filters.TEXT & ~filters.Regex(menu_buttons_pattern) & ~filters.COMMAND, handle_feedback_message)
     )
     # Handler for non-text messages when waiting for feedback (reject audio, images, etc.)
     # This must be added BEFORE video handler so it can check the flag first
