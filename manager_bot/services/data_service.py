@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 from services.constants import (
-    DATA_DIR, 
     USERS_RECORDS_FILENAME, 
     RESUME_RECORDS_FILENAME,
     BOT_FOR_APPLICANTS_USERNAME,
@@ -26,7 +25,7 @@ from services.constants import (
 def create_data_directory() -> Path:
     # TAGS: [create_data],[directory_path]
     """Create a directory for all data."""
-    data_dir = Path(DATA_DIR)
+    data_dir = os.getenv("USERS_DATA_DIR", "/users_data")
     data_dir.mkdir(parents=True, exist_ok=True)
     logger.debug(f"{data_dir} created or exists.")
     return data_dir
@@ -215,7 +214,7 @@ def create_tg_bot_link_for_applicant(bot_user_id: str, vacancy_id: str, resume_i
 def get_data_directory() -> Path:
     # TAGS: [get_data],[directory_path]
     """Get the directory path for user data."""
-    data_dir = Path(DATA_DIR)
+    data_dir = Path(os.getenv("USERS_DATA_DIR", "/users_data"))
     #return id if data_dir exists
     if data_dir.exists():
         return data_dir

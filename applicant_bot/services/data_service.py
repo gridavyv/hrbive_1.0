@@ -26,7 +26,8 @@ from services.constants import (
 def get_applicant_bot_data_directory() -> Path:
     # TAGS: [get_data],[directory_path],[applicant_bot_usage]
     """Get the directory path for user data."""
-    applicant_bot_data_dir = Path(APPLICANT_BOT_DATA_DIR)
+    DATA_DIR = os.getenv("USERS_DATA_DIR", "/users_data")
+    applicant_bot_data_dir = DATA_DIR / APPLICANT_BOT_DATA_DIR
     #return id if data_dir exists
     if applicant_bot_data_dir.exists():
         return applicant_bot_data_dir
@@ -88,7 +89,7 @@ def get_resume_id_from_applicant_bot_records(applicant_record_id: str) -> Option
 def get_vacancy_directory(user_record_id: str, vacancy_id: str) -> Optional[Path]:
     # TAGS: [get_data],[directory_path],[applicant_bot_usage]
     """Get the directory path for vacancy data."""
-    data_dir = Path(DATA_DIR)
+    data_dir = os.getenv("USERS_DATA_DIR", "/users_data")
     if data_dir.exists():
         user_data_dir = data_dir / f"bot_user_id_{user_record_id}"
         if user_data_dir.exists():

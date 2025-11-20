@@ -28,14 +28,11 @@ logging.basicConfig(
 def start_bot_process(name: str, cwd: str) -> subprocess.Popen:
     """
     Launches a bot as a separate process: python main.py in the specified directory.
-    
     Args:
         name: string "manager" or "applicant" (for logging)
         cwd: path to project directory (manager_bot or applicant_bot)
-    
     Returns:
         subprocess.Popen object of the launched process
-    
     Raises:
         subprocess.SubprocessError: if the process failed to start
         FileNotFoundError: if main.py is not found

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
 from manager_bot import (
     create_manager_application, 
@@ -156,7 +156,6 @@ def main():
 
     # ------------- SETUP OF THE DATA DIRECTORY and USER RECORDS FILE -------------
 
-    create_data_directory() # will be skipped if exist
     create_users_records_file() # will be skipped if exist
 
     # ------------- STARTING OF THE MANAGER BOT -------------

@@ -38,7 +38,6 @@ VIDEO_SENDING_CONFIRMATION_TEXT = (
 
 # ----- DATA SERVICE CONSTANTS -----
 
-DATA_DIR = "users_data"
 USERS_RECORDS_FILENAME = "records"
 RESUME_RECORDS_FILENAME = "resume_records"
 RESUME_SUBDIRECTORIES_LIST = ["new", "passed", "failed"]

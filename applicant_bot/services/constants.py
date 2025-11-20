@@ -22,7 +22,6 @@ VIDEO_SENDING_CONFIRMATION_TEXT = "Готовы отправить это вид
 
 # ----- DATA SERVICE CONSTANTS -----
 
-DATA_DIR = "users_data"
 APPLICANT_BOT_DATA_DIR = "applicant_bot_data"
 APPLICANT_BOT_RECORDS_FILENAME = "applicant_bot_records"
 
