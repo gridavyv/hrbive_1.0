@@ -25,7 +25,7 @@ from services.constants import (
 def create_data_directory() -> Path:
     # TAGS: [create_data],[directory_path]
     """Create a directory for all data."""
-    data_dir = os.getenv("USERS_DATA_DIR", "/users_data")
+    data_dir = Path(os.getenv("USERS_DATA_DIR", "/users_data"))
     data_dir.mkdir(parents=True, exist_ok=True)
     logger.debug(f"{data_dir} created or exists.")
     return data_dir

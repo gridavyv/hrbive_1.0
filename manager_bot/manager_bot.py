@@ -14,10 +14,10 @@ import re
 
 logger = logging.getLogger(__name__)
 
-from pydantic.type_adapter import P  # type: ignore
-from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, Update  # type: ignore
-from telegram.constants import ParseMode  # type: ignore
-from telegram.ext import (  # type: ignore
+from pydantic.type_adapter import P
+from telegram import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.constants import ParseMode
+from telegram.ext import (  
     Application,
     CallbackQueryHandler,
     CommandHandler,
@@ -120,8 +120,6 @@ USER_AGENT = os.getenv("USER_AGENT")
 
 # Global task queue for AI analysis tasks
 ai_task_queue = TaskQueue(maxsize=200)
-
-
 
 
 ##########################################

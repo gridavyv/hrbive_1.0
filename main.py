@@ -9,10 +9,11 @@ import subprocess
 import signal
 import time
 import logging
+from pathlib import Path
 
 # Load environment variables from .env file
 try:
-    from dotenv import load_dotenv  # type: ignore
+    from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
@@ -114,7 +115,7 @@ def main():
     logger.info("Project root: %s", project_root)
     
     # Check and create directory for shared data
-    users_data_dir = os.getenv("USERS_DATA_DIR", "/users_data")
+    users_data_dir = Path(os.getenv("USERS_DATA_DIR", "/users_data"))
     try:
         os.makedirs(users_data_dir, exist_ok=True)
         logger.info("USERS_DATA_DIR = %s (created/verified)", users_data_dir)
