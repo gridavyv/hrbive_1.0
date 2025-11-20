@@ -77,6 +77,8 @@ from services.data_service import (
     get_negotiation_id_from_resume_record,
     get_users_records_file_path,
     create_tg_bot_link_for_applicant,
+    create_video_from_managers_directory,
+    create_video_from_applicants_directory,
 )
 from services.auth_service import (
     get_token_by_state,
@@ -153,54 +155,7 @@ async def send_message_to_admin(application: Application, text: str, parse_mode:
         logger.error(f"Failed to send admin notification: {e}", exc_info=True)
 
 
-async def admin_test_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    #TAGS: [admin]
-    """
-    Admin command to test the bot.
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
-    """
-    
-    logger.info("admin_test_command called")
-    
-    try:
-        # ----- IDENTIFY USER and pull required data from records -----
-
-        bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        logger.info(f"admin_test_command: bot_user_id = {bot_user_id}")
-        
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
-
-        admin_id = os.getenv("ADMIN_ID", "")
-        if not admin_id:
-            logger.error("ADMIN_ID environment variable is not set")
-            await send_message_to_user(update, context, text="❌ Admin ID not configured.")
-            return
-        if bot_user_id != admin_id:
-            logger.warning(f"Unauthorized admin command attempt from user {bot_user_id}. Allowed ID: {admin_id}")
-            await send_message_to_user(update, context, text="❌ Unauthorized. Admin access required.")
-            return
-
-        # ----- SEND TEST MESSAGE -----
-
-        logger.info("Test command executed successfully")
-        await send_message_to_user(update, context, text="✅ Test command executed successfully")
-    
-    except Exception as e:
-        logger.error(f"Failed to execute admin_test command: {e}", exc_info=True)
-        # Send notification to admin about the error
-        if context.application:
-            await send_message_to_admin(
-                application=context.application,
-                text=f"⚠️ Error executing admin_test command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
-            )
-        # Also try to send error message to user
-        try:
-            await send_message_to_user(update, context, text="❌ Error executing test command.")
-        except Exception:
-            pass
-
-
-async def admin_get_list_of_users_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def admin_get_users_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
     Admin command to list all user IDs from user records.
@@ -338,7 +293,7 @@ async def admin_get_fresh_resumes_command(update: Update, context: ContextTypes.
             )
 
 
-async def admin_anazlyze_and_sort_resumes_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def admin_anazlyze_resumes_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
     Admin command to analyze fresh resumes for all users.
@@ -463,7 +418,7 @@ async def admin_recommend_applicants_with_video_command(update: Update, context:
             )
 
 
-async def admin_send_message_to_user_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def admin_send_message_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
     Admin command to send a message to a specific user by user_id (chat_id).
@@ -1175,6 +1130,8 @@ async def handle_answer_select_vacancy(update: Update, context: ContextTypes.DEF
         logger.debug(f"Target vacancy id: {target_vacancy_id}")
         if target_vacancy_id:
             create_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
+            create_video_from_managers_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
+            create_video_from_applicants_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
             create_resumes_directory_and_subdirectories(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_subdirectories=RESUME_SUBDIRECTORIES_LIST)
             create_resume_records_file(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
         else:
@@ -1757,6 +1714,9 @@ async def updated_resume_records_with_fresh_video_from_applicants_command(bot_us
         # ----- PREPARE PATHS to video files -----
 
         video_from_applicants_dir = get_directory_for_video_from_applicants(bot_user_id=bot_user_id, vacancy_id=vacancy_id)
+        if video_from_applicants_dir is None:
+            logger.warning(f"Video directory for applicants not found. Bot user id: {bot_user_id}, vacancy id: {vacancy_id}")
+            raise ValueError(f"Video directory for applicants not found for bot user id: {bot_user_id}, vacancy id: {vacancy_id}")
         all_video_paths_list = list(video_from_applicants_dir.glob("*.mp4"))
         fresh_videos_list = []
         

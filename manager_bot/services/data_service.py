@@ -3,7 +3,7 @@
 import os
 import json
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -50,12 +50,28 @@ def create_vacancy_directory(bot_user_id: str, vacancy_id: str) -> Path:
     vacancy_data_dir = user_data_dir / f"vacancy_id_{vacancy_id}"
     if vacancy_data_dir.mkdir(exist_ok=True):
         logger.debug(f"{vacancy_data_dir} created.")
-        create_custom_directory(parent_directory=vacancy_data_dir, new_directory_name="video_from_managers")
-        create_custom_directory(parent_directory=vacancy_data_dir, new_directory_name="video_from_applicants")
         return vacancy_data_dir
     else:
         logger.debug(f"{vacancy_data_dir} already exists.")
         return vacancy_data_dir
+
+
+def create_video_from_managers_directory(bot_user_id: str, vacancy_id: str) -> Path:
+    # TAGS: [create_data],[directory_path]
+    """Create a subdirectory for video from managers in the vacancy directory and return the path."""
+    vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=vacancy_id)
+    video_from_managers_data_path = create_custom_directory(parent_directory=vacancy_data_dir, new_directory_name="video_from_managers")
+    logger.debug(f"'video_from_managers' directory {video_from_managers_data_path} created.")
+    return video_from_managers_data_path
+
+
+def create_video_from_applicants_directory(bot_user_id: str, vacancy_id: str) -> Path:
+    # TAGS: [create_data],[directory_path]
+    """Create a subdirectory for video from applicants in the vacancy directory and return the path."""
+    vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=vacancy_id)
+    video_from_applicants_data_path = create_custom_directory(parent_directory=vacancy_data_dir, new_directory_name="video_from_applicants")
+    logger.debug(f"'video_from_applicants' directory {video_from_applicants_data_path} created.")
+    return video_from_applicants_data_path
 
 
 def create_resumes_directory_and_subdirectories(bot_user_id: str, vacancy_id: str, resume_subdirectories: list[str]) -> None:
@@ -63,6 +79,7 @@ def create_resumes_directory_and_subdirectories(bot_user_id: str, vacancy_id: st
     """Create directories for resumes and subdirectories for new, passed, failed resumes."""
     vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=vacancy_id)
     resume_data_path = create_custom_directory(parent_directory=vacancy_data_dir, new_directory_name="resumes")
+    logger.debug(f"'resumes' directory {resume_data_path} created.")
     for subdirectory in resume_subdirectories:
         create_custom_directory(parent_directory=resume_data_path, new_directory_name=subdirectory)
 
@@ -122,7 +139,7 @@ def create_record_for_new_user_in_records(record_id: str) -> None:
         "username": "",
         "first_name": "",
         "last_name": "",
-        "first_time_seen": datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M:%S"),
+        "first_time_seen": datetime.now(timezone.utc).isoformat(),
         "privacy_policy_confirmed": "no",
         "privacy_policy_confirmation_time": "",
         "access_token_recieved": "no",
@@ -230,8 +247,10 @@ def get_directory_for_video_from_managers(bot_user_id: str, vacancy_id: str) -> 
     vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=vacancy_id)
     managers_video_data_dir = vacancy_data_dir / "video_from_managers"
     if managers_video_data_dir.exists():
+        logger.debug(f"get_directory_for_video_from_managers: 'video_from_managers' directory {managers_video_data_dir} exists.")
         return managers_video_data_dir
     else:
+        logger.debug(f"get_directory_for_video_from_managers: 'video_from_managers' directory {managers_video_data_dir} does not exist.")
         return None
 
 
@@ -241,8 +260,10 @@ def get_directory_for_video_from_applicants(bot_user_id: str, vacancy_id: str) -
     vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=vacancy_id)
     applicants_video_data_dir = vacancy_data_dir / "video_from_applicants"
     if applicants_video_data_dir.exists():
+        logger.debug(f"get_directory_for_video_from_applicants: 'video_from_applicants' directory {applicants_video_data_dir} exists.")
         return applicants_video_data_dir
     else:
+        logger.debug(f"get_directory_for_video_from_applicants: 'video_from_applicants' directory {applicants_video_data_dir} does not exist.")
         return None
 
 

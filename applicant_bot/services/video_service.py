@@ -21,8 +21,10 @@ from services.constants import (
     SUCCESS_TO_SAVE_VIDEO_TEXT,
     INFO_ABOUT_VIDEO_DELETION_TEXT,
     FAIL_TO_DOWNLOAD_VIDEO_TEXT,
-    INFO_DOWNLOADING_APPLICANT_VIDEO_STARTED_TEXT
+    INFO_DOWNLOADING_APPLICANT_VIDEO_STARTED_TEXT,
+    FAIL_TO_IDENTIFY_VIDEO_TEXT
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +91,7 @@ async def process_incoming_video(update: Update, context: ContextTypes.DEFAULT_T
     # ----- IF NO VIDEO DETECTED, ask to reupload video -----
 
     if not file_id:
-        await update.message.reply_text("Не удалось определить видео. Пришлите, пожалуйста, еще раз не текст, не фото или аудио, а именно видео.")
+        await update.message.reply_text(FAIL_TO_IDENTIFY_VIDEO_TEXT)
         return
 
     # ----- VALIDATE THAT VIDEO matches requirements -----
@@ -128,8 +130,8 @@ async def download_incoming_video_locally(update: Update, context: ContextTypes.
 
 
         if video_dir_path is None:
-            logger.warning(f"Video directory path not found for applicant {applicant_user_id}")
-            raise ValueError("Video directory path not found for applicant")
+            logger.warning(f"Video directory path for applicant not found. Applicant user id: {applicant_user_id}")
+            raise ValueError(f"Video directory path not found for applicant user id: {applicant_user_id}")
 
         # Generate unique filename with appropriate extension
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")

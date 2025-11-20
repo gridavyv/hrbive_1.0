@@ -7,14 +7,13 @@ from manager_bot import (
     create_manager_application, 
     ai_task_queue, 
     start_command, 
-    admin_get_list_of_users_command,
+    admin_send_message_command,
     admin_update_negotiations_command,
     admin_get_fresh_resumes_command,
-    admin_anazlyze_and_sort_resumes_command,
+    admin_anazlyze_resumes_command,
     admin_status_of_applicants_video_command,
     admin_recommend_applicants_with_video_command,
     admin_send_message_to_user_command,
-    admin_test_command,
 )
 
 from services.data_service import (
@@ -78,13 +77,10 @@ async def run_manager_bot() -> None:
         raise RuntimeError("TELEGRAM_MANAGER_BOT_TOKEN not found in environment variables")
     application = create_manager_application(manager_token)
     application.add_handler(CommandHandler("start", _show_bottom_menu_on_start), group=-1)
-    logger.info("Registering admin_test command handler")
-    application.add_handler(CommandHandler("admin_test", admin_test_command))
-    logger.info("admin_test command handler registered successfully")
-    application.add_handler(CommandHandler("admin_get_list_of_users", admin_get_list_of_users_command))
+    application.add_handler(CommandHandler("admin_get_list_of_users", admin_send_message_command))
     application.add_handler(CommandHandler("admin_update_negotiations", admin_update_negotiations_command))
     application.add_handler(CommandHandler("admin_get_fresh_resumes", admin_get_fresh_resumes_command))
-    application.add_handler(CommandHandler("admin_analyze_and_sort_resumes", admin_anazlyze_and_sort_resumes_command))
+    application.add_handler(CommandHandler("admin_analyze_and_sort_resumes", admin_anazlyze_resumes_command))
     application.add_handler(CommandHandler("admin_status_of_applicants_video", admin_status_of_applicants_video_command))
     application.add_handler(CommandHandler("admin_recommend", admin_recommend_applicants_with_video_command))
     application.add_handler(CommandHandler("admin_send_message", admin_send_message_to_user_command))

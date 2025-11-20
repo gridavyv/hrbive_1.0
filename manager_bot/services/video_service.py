@@ -115,6 +115,10 @@ async def download_incoming_video_locally(update: Update, context: ContextTypes.
         target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
         video_dir_path = get_directory_for_video_from_managers(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
 
+        if video_dir_path is None:
+            logger.warning(f"Video directory path for managers not found. Bot user id: {bot_user_id}, vacancy id: {target_vacancy_id}")
+            raise ValueError(f"Video directory path for managers not found for bot user id: {bot_user_id}, vacancy id: {target_vacancy_id}")
+
         # Generate unique filename with appropriate extension
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         if file_type == "video_note":
