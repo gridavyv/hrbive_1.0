@@ -1642,21 +1642,21 @@ async def recommend_resumes_with_video_command(bot_user_id: str, application: Ap
     """Recommend resumes that have not yet been sent to the manager (with video).
     Sends notification to admin if fails"""
     
+    # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
+
+    validations = [
+        (is_vacancy_selected, MISSING_VACANCY_SELECTION_TEXT, "no open vacancies found"),
+        (is_vacancy_description_recieved, MISSING_VACANCY_DESCRIPTION_TEXT, "vacancy description is not received"),
+        (is_vacancy_sourcing_criterias_recieved, MISSING_SOURCING_CRITERIAS_TEXT, "sourcing criterias are not received"),
+    ]
+    
+    for check_func, error_text, error_reason in validations:
+        if not check_func(record_id=bot_user_id):
+            if application and application.bot:
+                await application.bot.send_message(chat_id=int(bot_user_id), text=error_text)
+            raise ValueError(f"Cannot recommend resumes, because {error_reason} for user {bot_user_id}") from None
+
     try:
-
-      # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
-
-        validations = [
-            (is_vacancy_selected, MISSING_VACANCY_SELECTION_TEXT, "no open vacancies found"),
-            (is_vacancy_description_recieved, MISSING_VACANCY_DESCRIPTION_TEXT, "vacancy description is not received"),
-            (is_vacancy_sourcing_criterias_recieved, MISSING_SOURCING_CRITERIAS_TEXT, "sourcing criterias are not received"),
-        ]
-        
-        for check_func, error_text, error_reason in validations:
-            if not check_func(record_id=bot_user_id):
-                if application and application.bot:
-                    await application.bot.send_message(chat_id=int(bot_user_id), text=error_text)
-                raise ValueError(f"Cannot recommend resumes, because {error_reason} for user {bot_user_id}")
 
         # ----- IDENTIFY USER and pull required data from records -----
         
