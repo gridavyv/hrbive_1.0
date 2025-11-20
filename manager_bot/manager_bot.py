@@ -1017,7 +1017,6 @@ async def handle_answer_confrim_sending_video(update: Update, context: ContextTy
             user_id=bot_user_id,
             file_type=video_kind
         )
-        await send_message_to_user(update, context, text=SUCCESS_TO_SAVE_VIDEO_TEXT)
 
         # ----- UPDATE USER RECORDS with video status and path -----
         # skipping as updated in "download_incoming_video_locally" method
