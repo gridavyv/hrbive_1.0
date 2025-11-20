@@ -1131,6 +1131,18 @@ async def read_vacancy_description_command(update: Update, context: ContextTypes
     Triggers: 'define_sourcing_criterias_command'.
     Sends notification to admin if fails"""
     
+    # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
+
+    validations = [
+        (is_vacancy_selected, MISSING_VACANCY_SELECTION_TEXT)
+    ]
+    
+    for check_func, error_text in validations:
+        if not check_func(record_id=bot_user_id):
+            await send_message_to_user(update, context, text=error_text)
+            return
+
+
     try:
         # ----- IDENTIFY USER and pull required data from records -----
         
@@ -1185,43 +1197,65 @@ async def define_sourcing_criterias_command(update: Update, context: ContextType
     Triggers: nothing.
     """
     
-    # ----- IDENTIFY USER and pull required data from records -----
+    # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
 
-    bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-    target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
+    validations = [
+        (is_vacancy_selected, MISSING_VACANCY_SELECTION_TEXT),
+        (is_vacancy_description_recieved, MISSING_VACANCY_DESCRIPTION_TEXT),
+    ]
+    
+    for check_func, error_text in validations:
+        if not check_func(record_id=bot_user_id):
+            await send_message_to_user(update, context, text=error_text)
+            return
 
-    # ----- CHECK IF SOURCING CRITERIA is already derived and STOP if it is -----
+    try:
+        # ----- IDENTIFY USER and pull required data from records -----
 
-    if is_sourcing_criterias_file_exists(record_id=bot_user_id, vacancy_id=target_vacancy_id):
-        await send_message_to_user(update, context, text=SUCCESS_TO_GET_SOURCING_CRITERIAS_TEXT)
-        return
+        bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
 
-    # ----- DO AI ANALYSIS of the vacancy description  -----
+        # ----- CHECK IF SOURCING CRITERIA is already derived and STOP if it is -----
 
-    # Get files paths for AI analysis
-    vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
-    vacancy_description_file_path = vacancy_data_dir / "vacancy_description.json"
-    prompt_file_path = Path(PROMPT_DIR) / "for_vacancy.txt"
+        if is_sourcing_criterias_file_exists(record_id=bot_user_id, vacancy_id=target_vacancy_id):
+            await send_message_to_user(update, context, text=SUCCESS_TO_GET_SOURCING_CRITERIAS_TEXT)
+            return
 
-    await send_message_to_user(update, context, text="Анализирую вакансию. Это может занять некоторое время. Я нашипу в чат когда будет готово.")
+        # ----- DO AI ANALYSIS of the vacancy description  -----
 
-    # Load inputs for AI analysis
-    with open(vacancy_description_file_path, "r", encoding="utf-8") as f:
-        vacancy_description = json.load(f)
-    with open(prompt_file_path, "r", encoding="utf-8") as f:
-        prompt_text = f.read()
+        # Get files paths for AI analysis
+        vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
+        vacancy_description_file_path = vacancy_data_dir / "vacancy_description.json"
+        prompt_file_path = Path(PROMPT_DIR) / "for_vacancy.txt"
+
+        await send_message_to_user(update, context, text="Анализирую вакансию. Это может занять некоторое время. Я нашипу в чат когда будет готово.")
+
+        # Load inputs for AI analysis
+        with open(vacancy_description_file_path, "r", encoding="utf-8") as f:
+            vacancy_description = json.load(f)
+        with open(prompt_file_path, "r", encoding="utf-8") as f:
+            prompt_text = f.read()
 
 
-    # Add AI analysis task to queue
-    await ai_task_queue.put(
-        get_sourcing_criterias_from_ai_and_save_to_file,
-        vacancy_description,
-        prompt_text,
-        vacancy_data_dir,
-        update,
-        context,
-        task_id=f"vacancy_analysis_{bot_user_id}_{target_vacancy_id}"
-    )
+        # Add AI analysis task to queue
+        await ai_task_queue.put(
+            get_sourcing_criterias_from_ai_and_save_to_file,
+            vacancy_description,
+            prompt_text,
+            vacancy_data_dir,
+            update,
+            context,
+            task_id=f"vacancy_analysis_{bot_user_id}_{target_vacancy_id}"
+        )
+    except Exception as e:
+        logger.error(f"Error in define_sourcing_criterias_command: {e}", exc_info=True)
+        await send_message_to_user(update, context, text=FAIL_TECHNICAL_SUPPORT_TEXT)
+        # Send notification to admin about the error
+        if context.application:
+            await send_message_to_admin(
+                application=context.application,
+                text=f"⚠️ Error in define_sourcing_criterias_command: {e}\nUser ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
+            )
 
 
 async def get_sourcing_criterias_from_ai_and_save_to_file(
@@ -1645,16 +1679,16 @@ async def recommend_resumes_with_video_command(bot_user_id: str, application: Ap
     # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
 
     validations = [
-        (is_vacancy_selected, MISSING_VACANCY_SELECTION_TEXT, "no open vacancies found"),
-        (is_vacancy_description_recieved, MISSING_VACANCY_DESCRIPTION_TEXT, "vacancy description is not received"),
-        (is_vacancy_sourcing_criterias_recieved, MISSING_SOURCING_CRITERIAS_TEXT, "sourcing criterias are not received"),
+        (is_vacancy_selected, MISSING_VACANCY_SELECTION_TEXT),
+        (is_vacancy_description_recieved, MISSING_VACANCY_DESCRIPTION_TEXT),
+        (is_vacancy_sourcing_criterias_recieved, MISSING_SOURCING_CRITERIAS_TEXT),
     ]
     
-    for check_func, error_text, error_reason in validations:
+    for check_func, error_text in validations:
         if not check_func(record_id=bot_user_id):
             if application and application.bot:
                 await application.bot.send_message(chat_id=int(bot_user_id), text=error_text)
-            raise ValueError(f"Cannot recommend resumes, because {error_reason} for user {bot_user_id}") from None
+            return
 
     try:
 
