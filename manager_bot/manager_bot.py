@@ -1131,6 +1131,13 @@ async def read_vacancy_description_command(update: Update, context: ContextTypes
     Triggers: 'define_sourcing_criterias_command'.
     Sends notification to admin if fails"""
     
+    # ----- IDENTIFY USER and pull required data from records -----
+    
+    bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    access_token = get_access_token_from_records(bot_user_id=bot_user_id)
+    target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
+    target_vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
+    
     # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
 
     validations = [
@@ -1139,18 +1146,11 @@ async def read_vacancy_description_command(update: Update, context: ContextTypes
     
     for check_func, error_text in validations:
         if not check_func(record_id=bot_user_id):
+            logger.error(f"Validation failed: {error_text}")
             await send_message_to_user(update, context, text=error_text)
             return
 
-
     try:
-        # ----- IDENTIFY USER and pull required data from records -----
-        
-        bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        access_token = get_access_token_from_records(bot_user_id=bot_user_id)
-        target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
-        target_vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
-
 
         # ----- IF FILE with VACANCY DESCRIPTION already exists then SKIP PULLING it from HH -----
 
@@ -1196,7 +1196,12 @@ async def define_sourcing_criterias_command(update: Update, context: ContextType
     Called from: 'read_vacancy_description_command'.
     Triggers: nothing.
     """
-    
+
+    # ----- IDENTIFY USER and pull required data from records -----
+
+    bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
+
     # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
 
     validations = [
@@ -1206,6 +1211,7 @@ async def define_sourcing_criterias_command(update: Update, context: ContextType
     
     for check_func, error_text in validations:
         if not check_func(record_id=bot_user_id):
+            logger.error(f"Validation failed: {error_text}")
             await send_message_to_user(update, context, text=error_text)
             return
 
@@ -1675,7 +1681,12 @@ async def recommend_resumes_with_video_command(bot_user_id: str, application: Ap
     # TAGS: [recommendation_related]
     """Recommend resumes that have not yet been sent to the manager (with video).
     Sends notification to admin if fails"""
-    
+
+    # ----- IDENTIFY USER and pull required data from records -----
+        
+    target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
+    target_vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
+
     # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
 
     validations = [
@@ -1686,17 +1697,12 @@ async def recommend_resumes_with_video_command(bot_user_id: str, application: Ap
     
     for check_func, error_text in validations:
         if not check_func(record_id=bot_user_id):
+            logger.error(f"Validation failed: {error_text}")
             if application and application.bot:
                 await application.bot.send_message(chat_id=int(bot_user_id), text=error_text)
             return
 
     try:
-
-        # ----- IDENTIFY USER and pull required data from records -----
-        
-        target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
-        target_vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
-
 
         # ----- GET LIST of RESUME IDs that have not been recommended yet -----
 
