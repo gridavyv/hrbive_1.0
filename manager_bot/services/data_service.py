@@ -150,7 +150,7 @@ def create_record_for_new_user_in_records(record_id: str) -> None:
         "vacancy_id": "",
         "vacancy_name": "",
         "vacancy_video_record_agreed": "no",
-        "vacancy_video_sending_confirmed": "",
+        "vacancy_video_sending_confirmed": "no",
         "vacancy_video_received": "no",
         "vacancy_video_path": "",
         "vacancy_description_recieved": "no",
