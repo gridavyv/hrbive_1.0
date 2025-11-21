@@ -1908,7 +1908,8 @@ async def recommend_resumes_with_video_command(bot_user_id: str, application: Ap
                     keyboard = InlineKeyboardMarkup([[invite_button]])
                     await application.bot.send_message(
                         chat_id=int(bot_user_id),
-                        text=" ",  # Empty text is required for message with only keyboard
+                        text=f"Хотите пригласить кандидата на интервью?", 
+                        parse_mode=ParseMode.HTML,
                         reply_markup=keyboard
                     )
                 else:
