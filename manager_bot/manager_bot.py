@@ -1532,10 +1532,22 @@ async def source_resumes_triggered_by_admin_command(bot_user_id: str) -> None:
 
         # Update resume records with new resume data
         negotiation_id = tmp_resume_id_and_negotiation_id_dict[resume_id]
-        first_name = resume_data["first_name"]
-        last_name = resume_data["last_name"]
-        phone = resume_data["contact"][0]["value"]["formatted"]
-        email = resume_data["contact"][1]["value"]
+        first_name = resume_data.get("first_name", "")
+        last_name = resume_data.get("last_name", "")
+        
+        # Safely extract phone and email from contact array
+        phone = ""
+        email = ""
+        contacts_list = resume_data.get("contact", [])
+        
+        for contact in contacts_list:
+            # Handle both "value" and "contact_value" keys
+            contact_data = contact.get("contact_value")
+            if "@" in contact_data:
+                email = contact_data
+            else:
+                phone = contact_data
+
         update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="negotiation_id", value=negotiation_id)
         update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="first_name", value=first_name)
         update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="last_name", value=last_name)
