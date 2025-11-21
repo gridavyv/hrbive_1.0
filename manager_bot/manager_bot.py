@@ -1632,10 +1632,10 @@ async def resume_analysis_from_ai_to_user_sort_resume(
         )
         
         # Send message to applicant
-        await send_message_to_applicant_command(bot_user_id=bot_user_id, resume_record_id=resume_id)
+        await send_message_to_applicant_command(bot_user_id=bot_user_id, resume_id=resume_id)
         
         # Change employer state
-        await change_employer_state_command(bot_user_id=bot_user_id, resume_record_id=resume_id)
+        await change_employer_state_command(bot_user_id=bot_user_id, resume_id=resume_id)
         
         # Sort resume based on final score
         resume_final_score = int(ai_analysis_result.get("final_score", 0))
