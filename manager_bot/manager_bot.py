@@ -1802,7 +1802,7 @@ async def update_resume_records_with_fresh_video_from_applicants_command(bot_use
             if not is_applicant_video_recorded(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_id=resume_id):
                 fresh_videos_list.append(resume_id)
                 update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_video_received", value="yes")
-                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_video_path", value=video_path)
+                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_video_path", value=str(video_path))
         
         logger.debug(f"update_resume_records_with_fresh_video_from_applicants_command: {len(fresh_videos_list)} fresh videos have been found and updated in resume records")
     
