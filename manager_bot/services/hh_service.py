@@ -64,9 +64,9 @@ def clean_user_info_received_from_hh(user_info: dict) -> dict:
 
 # ------------------------------ VACANCY related calls ------------------------------
 
-def get_employer_vacancies_from_hh(access_token: str):
+def get_employer_vacancies_from_hh(access_token: str, employer_id: str):
     r = requests.get(
-        "https://api.hh.ru/employers/9163396/vacancies/active",
+        "https://api.hh.ru/employers/{employer_id}/vacancies/active",
         headers={
             "Authorization": f"Bearer {access_token}",
             "User-Agent": USER_AGENT,

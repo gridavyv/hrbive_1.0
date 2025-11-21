@@ -79,6 +79,7 @@ from services.data_service import (
     create_tg_bot_link_for_applicant,
     create_video_from_managers_directory,
     create_video_from_applicants_directory,
+    get_employer_id_from_records,
 )
 from services.auth_service import (
     get_token_by_state,
@@ -710,7 +711,7 @@ async def hh_authorization_command(update: Update, context: ContextTypes.DEFAULT
 
     await send_message_to_user(update, context, text="⏳ Ожидаю авторизацию...")
     # Wait for user to authorize - retry 5 times over ~60 seconds
-    max_attempts = 20
+    max_attempts = 30
     retry_delay = 6  # seconds between retries
     endpoint_response = None
     # Retry to get access token by state 5 times over ~60 seconds
@@ -1060,8 +1061,18 @@ async def select_vacancy_command(update: Update, context: ContextTypes.DEFAULT_T
 
         # ----- PULL ALL OPEN VACANCIES from HH and enrich records with it -----
 
+        employer_id = get_employer_id_from_records(record_id=bot_user_id)
+        if not employer_id:
+            await send_message_to_user(update, context, text=FAILED_TO_GET_OPEN_VACANCIES_TEXT)
+            # Raise exception to be caught by outer try-except block (which will notify admin)
+            raise ValueError(f"No employer id found for user {bot_user_id}")
+
         # Get open vacancies from HH.ru API
-        all_employer_vacancies = get_employer_vacancies_from_hh(access_token=access_token)
+        all_employer_vacancies = get_employer_vacancies_from_hh(access_token=access_token, employer_id=employer_id)
+        if all_employer_vacancies is None:
+            await send_message_to_user(update, context, text=FAILED_TO_GET_OPEN_VACANCIES_TEXT)
+            # Raise exception to be caught by outer try-except block (which will notify admin)
+            raise ValueError(f"No open vacancies found for user {bot_user_id}")
         # Filter only open vacancies (id, name tuples)
         vacancy_status = VACANCY_STATUS_TO_FILTER
         # get nested dict with open vacancies {id: {id, name, status=open}}

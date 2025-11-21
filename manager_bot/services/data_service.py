@@ -550,6 +550,20 @@ def get_reply_from_update_object(update: Update):
         return None
 
 
+def get_employer_id_from_records(record_id: str) -> Optional[str]:
+    """Get employer id from users records. TAGS: [get_data]"""
+    users_records_file_path = get_users_records_file_path()
+    with open(users_records_file_path, "r", encoding="utf-8") as f:
+        records = json.load(f)
+    if record_id in records:
+        employer_id = records[record_id]["data_from_hh"]["employer"]["id"]
+        logger.debug(f"'employer_id': {employer_id} found for 'bot_user_id': {record_id} in {users_records_file_path}")
+        return employer_id
+    else:
+        logger.debug(f"'record_id': {record_id} not found in {users_records_file_path}")
+        return None
+
+
 # ****** METHODS with TAGS: [update_data] ******
 
 def update_user_records_with_top_level_key(record_id: int | str, key: str, value: str | int | bool | dict | list) -> None:
