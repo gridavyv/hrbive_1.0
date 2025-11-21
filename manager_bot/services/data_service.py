@@ -450,6 +450,7 @@ def get_list_of_passed_resume_ids_with_video(bot_user_id: str, vacancy_id: str) 
             # Collect resume id for passed resumes WITH video
             if resume_record_data["resume_video_received"] == "yes":
                 list_of_passed_resume_ids_with_video.append(resume_id)
+    logger.debug(f"get_list_of_passed_resume_ids_with_video: List of passed resume IDs with video: {list_of_passed_resume_ids_with_video}")
     return list_of_passed_resume_ids_with_video
 
 

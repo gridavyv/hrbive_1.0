@@ -167,6 +167,7 @@ async def admin_get_users_command(update: Update, context: ContextTypes.DEFAULT_
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"admin_get_users_command triggered by user_id: {bot_user_id}")
         
         #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
 
@@ -209,7 +210,8 @@ async def admin_update_negotiations_command(update: Update, context: ContextType
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        
+        logger.info(f"admin_update_negotiations_command triggered by user_id: {bot_user_id}")
+
         #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
 
         admin_id = os.getenv("ADMIN_ID", "")
@@ -257,6 +259,7 @@ async def admin_get_fresh_resumes_command(update: Update, context: ContextTypes.
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"admin_get_fresh_resumes_command triggered by user_id: {bot_user_id}")
         
         #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
 
@@ -305,6 +308,7 @@ async def admin_anazlyze_resumes_command(update: Update, context: ContextTypes.D
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"admin_anazlyze_resumes_command triggered by user_id: {bot_user_id}")
         
         #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
 
@@ -353,6 +357,7 @@ async def admin_status_of_applicants_video_command(update: Update, context: Cont
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"admin_status_of_applicants_video_command triggered by user_id: {bot_user_id}")
         target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
 
         #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
@@ -392,6 +397,7 @@ async def admin_recommend_applicants_with_video_command(update: Update, context:
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"admin_recommend_applicants_with_video_command triggered by user_id: {bot_user_id}")
         
         #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
 
@@ -432,6 +438,7 @@ async def admin_send_message_command(update: Update, context: ContextTypes.DEFAU
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"admin_send_message_command triggered by user_id: {bot_user_id}")
         
         #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
 
@@ -545,7 +552,8 @@ async def setup_new_user_command(update: Update, context: ContextTypes.DEFAULT_T
         # ------ COLLECT NEW USER ID and CREATE record and user directory if needed ------
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        logger.debug(f"bot_user_id: {bot_user_id}")
+        logger.info(f"setup_new_user_command started. user_id: {bot_user_id}")
+
         if not is_user_in_records(record_id=bot_user_id):
             create_record_for_new_user_in_records(record_id=bot_user_id)
             create_user_directory(bot_user_id=bot_user_id)
@@ -578,6 +586,7 @@ async def ask_privacy_policy_confirmation_command(update: Update, context: Conte
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"ask_privacy_policy_confirmation_command started. user_id: {bot_user_id}")
 
     # ----- CHECK IF PRIVACY POLICY is already confirmed and STOP if it is -----
 
@@ -606,6 +615,7 @@ async def handle_answer_policy_confirmation(update: Update, context: ContextType
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_answer_policy_confirmation started. user_id: {bot_user_id}")
     
     # ------- UNDERSTAND WHAT BUTTON was clicked and get "callback_data" from it -------
 
@@ -679,6 +689,7 @@ async def hh_authorization_command(update: Update, context: ContextTypes.DEFAULT
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"hh_authorization_command triggered by user_id: {bot_user_id}")
     
     # ----- CHECK IF NO Privacy policy consent or AUTHORIZAED already and STOP if it is -----
     if not is_manager_privacy_policy_confirmed(bot_user_id=bot_user_id):
@@ -756,6 +767,7 @@ async def pull_user_data_from_hh_command(update: Update, context: ContextTypes.D
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"pull_user_data_from_hh_command started. user_id: {bot_user_id}")
         access_token = get_access_token_from_records(bot_user_id=bot_user_id)
 
         # ----- CHECK IF USER DATA is already in records and STOP if it is -----
@@ -797,6 +809,7 @@ async def ask_to_record_video_command(update: Update, context: ContextTypes.DEFA
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"ask_to_record_video_command triggered by user_id: {bot_user_id}")
     target_vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
 
     # ----- CHECK MUST CONDITIONS are met and STOP if not -----
@@ -846,6 +859,7 @@ async def handle_answer_video_record_request(update: Update, context: ContextTyp
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_answer_video_record_request triggered by user_id: {bot_user_id}")
     
     # ------- UNDERSTAND WHAT BUTTON was clicked and get "callback_data" from it -------
 
@@ -939,6 +953,11 @@ async def ask_confirm_sending_video_command(update: Update, context: ContextType
     Called from: 'process_incoming_video' from file "services.video_service.py".
     Triggers: nothing. """
 
+    # ----- IDENTIFY USER and pull required data from records -----
+
+    bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"ask_confirm_sending_video_command started. user_id: {bot_user_id}")
+
     # Build options (which will be tuples of (button_text, callback_data))
     answer_options = [
         ("Да. Отправить это.", "sending_video_confirmation:yes"),
@@ -961,6 +980,7 @@ async def handle_answer_confrim_sending_video(update: Update, context: ContextTy
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_answer_confrim_sending_video triggered by user_id: {bot_user_id}")
 
     # ------- UNDERSTAND WHAT BUTTON was clicked and get "callback_data" from it -------
 
@@ -1049,6 +1069,7 @@ async def select_vacancy_command(update: Update, context: ContextTypes.DEFAULT_T
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"select_vacancy_command started. user_id: {bot_user_id}")
         access_token = get_access_token_from_records(bot_user_id=bot_user_id)
 
         # ----- CHECK IF Privacy confirmed and VACANCY is selected and STOP if it is -----
@@ -1130,6 +1151,7 @@ async def handle_answer_select_vacancy(update: Update, context: ContextTypes.DEF
         # ----- IDENTIFY USER and pull required data from records -----
         
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"handle_answer_select_vacancy started. user_id: {bot_user_id}")
         
         # ------- UNDERSTAND WHAT BUTTON was clicked and get "callback_data" from it -------
 
@@ -1210,6 +1232,7 @@ async def read_vacancy_description_command(update: Update, context: ContextTypes
     # ----- IDENTIFY USER and pull required data from records -----
     
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"read_vacancy_description_command started. user_id: {bot_user_id}")
     access_token = get_access_token_from_records(bot_user_id=bot_user_id)
     target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
     target_vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
@@ -1276,6 +1299,7 @@ async def define_sourcing_criterias_command(update: Update, context: ContextType
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"define_sourcing_criterias_command started. user_id: {bot_user_id}")
     target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
 
     # ----- VALIDATE VACANCY IS SELECTED and has description and sourcing criterias exist -----
@@ -1356,6 +1380,7 @@ async def get_sourcing_criterias_from_ai_and_save_to_file(
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"get_sourcing_criterias_from_ai_and_save_to_file started. user_id: {bot_user_id}")
 
     try:
         
@@ -1405,6 +1430,8 @@ async def source_negotiations_triggered_by_admin_command(bot_user_id: str) -> No
     # TAGS: [resume_related]
     """Sources negotiations collection."""
     
+    logger.info(f"source_negotiations_triggered_by_admin_command started. user_id: {bot_user_id}")
+
     # ----- IDENTIFY USER and pull required data from records -----
     
     access_token = get_access_token_from_records(bot_user_id=bot_user_id)
@@ -1430,6 +1457,8 @@ async def source_negotiations_triggered_by_admin_command(bot_user_id: str) -> No
 async def source_resumes_triggered_by_admin_command(bot_user_id: str) -> None:
     # TAGS: [resume_related]
     """Sources resumes from negotiations."""
+
+    logger.info(f"source_resumes_triggered_by_admin_command started. user_id: {bot_user_id}")
     
     # ----- IDENTIFY USER and pull required data from records -----
     
@@ -1530,6 +1559,8 @@ async def analyze_resume_triggered_by_admin_command(bot_user_id: str) -> None:
     Triggers 'send_message_to_applicants_command' and 'change_employer_state_command' for each resume.
     Does not trigger any other commands once done.
     """
+
+    logger.info(f"analyze_resume_triggered_by_admin_command started. user_id: {bot_user_id}")
 
     # ----- IDENTIFY USER and pull required data from records -----
     
@@ -1696,6 +1727,8 @@ async def send_message_to_applicant_command(bot_user_id: str, resume_id: str) ->
 async def change_employer_state_command(bot_user_id: str, resume_id: str) -> None:
     # TAGS: [resume_related]
     """Trigger send message to applicant command handler - allows users to send message to applicant."""
+
+    logger.info(f"change_employer_state_command started. user_id: {bot_user_id}")
     
     # ----- IDENTIFY USER and pull required data from records -----
     
@@ -1723,6 +1756,8 @@ async def updated_resume_records_with_fresh_video_from_applicants_command(bot_us
     # TAGS: [resume_related]
     """Update resume records with fresh videos from applicants directory.
     Sends notification to admin if fails"""
+
+    logger.info(f"updated_resume_records_with_fresh_video_from_applicants_command started. user_id: {bot_user_id}")
     
     try:
         # ----- PREPARE PATHS to video files -----
@@ -1763,6 +1798,8 @@ async def recommend_resumes_with_video_command(bot_user_id: str, application: Ap
     """Recommend resumes that have not yet been sent to the manager (with video).
     Sends notification to admin if fails"""
 
+    logger.info(f"recommend_resumes_with_video_command started. user_id: {bot_user_id}")
+
     # ----- IDENTIFY USER and pull required data from records -----
         
     target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
@@ -1788,7 +1825,7 @@ async def recommend_resumes_with_video_command(bot_user_id: str, application: Ap
         # ----- GET LIST of RESUME IDs that have not been recommended yet -----
 
         passed_resume_ids_with_video = get_list_of_passed_resume_ids_with_video(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
-        logger.debug(f"List of resume IDs with video: {passed_resume_ids_with_video}")
+        logger.debug(f"recommend_resumes_with_video_command: List of resume IDs with video: {passed_resume_ids_with_video} has been recieved.")
 
         # ----- COMMUNICATE SUMMARY of recommendation -----
 
@@ -1872,6 +1909,8 @@ async def handle_invite_to_interview_button(update: Update, context: ContextType
     # TAGS: [recommendation_related]
     """Handle invite to interview button click. Sends notification to admin.
     Sends notification to admin if fails"""
+
+    logger.info(f"handle_invite_to_interview_button started. user_id: {bot_user_id}")
     
     if not update.callback_query:
         return
@@ -1982,6 +2021,7 @@ async def show_chat_menu_command(update: Update, context: ContextTypes.DEFAULT_T
     # ----- IDENTIFY USER and pull required data from records -----
     
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"show_chat_menu_command started. user_id: {bot_user_id}")
     status_dict = await user_status(bot_user_id=bot_user_id)
     status_text = await build_user_status_text(bot_user_id=bot_user_id, status_dict=status_dict)
 
@@ -2023,6 +2063,10 @@ async def show_chat_menu_command(update: Update, context: ContextTypes.DEFAULT_T
 
 async def handle_chat_menu_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle chat menu action button clicks."""
+
+    # ----- IDENTIFY USER and pull required data from records -----
+    bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_chat_menu_action started. user_id: {bot_user_id}")
     
     # ------- UNDERSTAND WHAT BUTTON was clicked and get "callback_data" from it -------
     
@@ -2092,6 +2136,11 @@ async def handle_feedback_button_click(update: Update, context: ContextTypes.DEF
     # TAGS: [user_related]
     """Handle feedback button click. Sets flag to wait for user feedback message."""
         
+    # ----- IDENTIFY USER and pull required data from records -----
+    
+    bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_feedback_button_click started. user_id: {bot_user_id}")
+
     # ----- SET WAITING FOR FEEDBACK FLAG TO TRUE -----
 
     # Reset flag and allow new feedback (user can click button again to send new message)
@@ -2111,6 +2160,7 @@ async def handle_feedback_message(update: Update, context: ContextTypes.DEFAULT_
     # ----- IDENTIFY USER and pull required data from records -----
 
     bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_feedback_message started. user_id: {bot_user_id}")
     
     # ----- CHECK FOR WAITING FOR FEEDBACK FLAG -----
 

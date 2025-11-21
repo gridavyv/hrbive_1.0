@@ -111,7 +111,7 @@ async def setup_new_applicant_command(update: Update, context: ContextTypes.DEFA
         # ------ COLLECT NEW USER ID and CREATE record and user directory if needed ------
 
         applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        logger.debug(f"applicant_user_id: {applicant_user_id}")
+        logger.info(f"setup_new_applicant_command started. applicant_user_id: {applicant_user_id}")
 
         if not is_applicant_in_applicant_bot_records(applicant_record_id=applicant_user_id):
             create_new_applicant_in_applicant_bot_records(applicant_record_id=applicant_user_id)
@@ -198,6 +198,7 @@ async def ask_privacy_policy_confirmation_command(update: Update, context: Conte
     # ----- IDENTIFY USER and pull required data from records -----
 
     applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"ask_privacy_policy_confirmation_command started. applicant_user_id: {applicant_user_id}")
     manager_user_id = get_manager_user_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
     vacancy_id = get_vacancy_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
 
@@ -235,6 +236,7 @@ async def handle_answer_policy_confirmation(update: Update, context: ContextType
     # ----- IDENTIFY USER and pull required data from records -----
 
     applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_answer_policy_confirmation started. applicant_user_id: {applicant_user_id}")
     
     # ------- UNDERSTAND WHAT BUTTON was clicked and get "callback_data" from it -------
 
@@ -303,6 +305,7 @@ async def show_welcome_video_command(update: Update, context: ContextTypes.DEFAU
     # ----- IDENTIFY USER and pull required data from records -----
 
     applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"show_welcome_video_command started. applicant_user_id: {applicant_user_id}")
     manager_user_id = get_manager_user_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
     vacancy_id = get_vacancy_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
 
@@ -352,6 +355,7 @@ async def ask_to_record_video_command(update: Update, context: ContextTypes.DEFA
     # ----- IDENTIFY USER and pull required data from records -----
 
     applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"ask_to_record_video_command started. applicant_user_id: {applicant_user_id}")
     manager_user_id = get_manager_user_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
     vacancy_id = get_vacancy_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
 
@@ -406,6 +410,7 @@ async def handle_answer_video_record_request(update: Update, context: ContextTyp
     # ----- IDENTIFY USER and pull required data from records -----
 
     applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_answer_video_record_request started. applicant_user_id: {applicant_user_id}")
     
     # ------- UNDERSTAND WHAT BUTTON was clicked and get "callback_data" from it -------
 
@@ -492,6 +497,11 @@ async def ask_confirm_sending_video_command(update: Update, context: ContextType
     """Ask confirm sending video command handler. 
     Called from: 'process_incoming_video' from file "services.video_service.py".
     Triggers: nothing. """
+
+    # ----- IDENTIFY USER and pull required data from records -----
+
+    applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"ask_confirm_sending_video_command started. applicant_user_id: {applicant_user_id}")
 
     # Build options (which will be tuples of (button_text, callback_data))
     answer_options = [
@@ -767,6 +777,7 @@ async def show_chat_menu_command(update: Update, context: ContextTypes.DEFAULT_T
     # ----- IDENTIFY USER and pull required data from records -----
     
     applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"show_chat_menu_command started. applicant_user_id: {applicant_user_id}")
     status_dict = await user_status(applicant_user_id=applicant_user_id)
     status_text = await build_user_status_text(status_dict=status_dict)
 
@@ -805,6 +816,11 @@ async def show_chat_menu_command(update: Update, context: ContextTypes.DEFAULT_T
 async def handle_chat_menu_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle chat menu action button clicks."""
     
+    # ----- IDENTIFY USER and pull required data from records -----
+
+    applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_chat_menu_action started. applicant_user_id: {applicant_user_id}")
+
     # ------- UNDERSTAND WHAT BUTTON was clicked and get "callback_data" from it -------
     
     # Get the "callback_data" extracted from "update.callback_query" object created once button clicked
@@ -863,7 +879,12 @@ async def handle_chat_menu_action(update: Update, context: ContextTypes.DEFAULT_
 async def handle_feedback_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # TAGS: [user_related]
     """Handle feedback button click. Sets flag to wait for user feedback message."""
-        
+
+    # ----- IDENTIFY USER and pull required data from records -----
+
+    applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_feedback_button_click started. applicant_user_id: {applicant_user_id}")
+
     # ----- SET WAITING FOR FEEDBACK FLAG TO TRUE -----
 
     # Reset flag and allow new feedback (user can click button again to send new message)
@@ -883,6 +904,7 @@ async def handle_feedback_message(update: Update, context: ContextTypes.DEFAULT_
     # ----- IDENTIFY USER and pull required data from records -----
 
     applicant_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+    logger.info(f"handle_feedback_message started. applicant_user_id: {applicant_user_id}")
     
     # ----- CHECK FOR WAITING FOR FEEDBACK FLAG -----
 
