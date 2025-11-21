@@ -1368,7 +1368,7 @@ async def get_sourcing_criterias_from_ai_and_save_to_file(
         
         # ----- SAVE SOURCING CRITERIAS to file and update records -----
 
-        sourcing_file_path = Path(vacancy_data_dir) / "sourcing_criteria.json"
+        sourcing_file_path = Path(vacancy_data_dir) / "sourcing_criterias.json"
         with open(sourcing_file_path, "w", encoding="utf-8") as f:
             json.dump(vacancy_analysis_result, f, ensure_ascii=False, indent=2)
         
