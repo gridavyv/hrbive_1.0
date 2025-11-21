@@ -122,7 +122,7 @@ OAUTH_REDIRECT_URL = os.getenv("OAUTH_REDIRECT_URL")
 USER_AGENT = os.getenv("USER_AGENT")
 
 # Global task queue for AI analysis tasks
-ai_task_queue = TaskQueue(maxsize=200)
+ai_task_queue = TaskQueue(maxsize=500)
 
 
 ##########################################

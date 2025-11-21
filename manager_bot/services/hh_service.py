@@ -297,9 +297,15 @@ def send_negotiation_message(access_token: str, negotiation_id: str, user_messag
             params={"message": f"{user_message_formatted}"}
         )
         r.raise_for_status()
-        if r.status_code == 200:
-            logger.debug(f"request successful: {r.text}")
-            return r.json()
+        if r.status_code in (200, 201):
+            logger.debug(f"request successful: {r.status_code} - {r.text}")
+            # Some HH endpoints return 201 Created with empty body
+            if r.text and r.headers.get("Content-Type", "").startswith("application/json"):
+                try:
+                    return r.json()
+                except Exception:
+                    pass
+            return {"status": "success", "code": r.status_code}
         else:
             logger.error(f"request failed: {r.status_code} {r.text}")
             return None
