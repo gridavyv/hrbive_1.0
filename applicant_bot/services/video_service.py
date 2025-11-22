@@ -123,7 +123,7 @@ async def download_incoming_video_locally(update: Update, context: ContextTypes.
         query = update.callback_query
         manager_user_id = get_manager_user_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
         vacancy_id = get_vacancy_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
-        video_dir_path = get_directory_for_video_from_applicants(user_record_id=manager_user_id, vacancy_id=vacancy_id)
+        video_dir_path = get_directory_for_video_from_applicants(user_record_id=manager_user_id, vacancy_id=vacancy_id) # ValueError raised if fails
         resume_id = get_resume_id_from_applicant_bot_records(applicant_record_id=applicant_user_id)
 
         await send_message_to_user(update, context, text=INFO_DOWNLOADING_APPLICANT_VIDEO_STARTED_TEXT)

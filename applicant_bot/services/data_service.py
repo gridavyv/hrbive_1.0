@@ -111,7 +111,7 @@ def get_directory_for_video_from_applicants(user_record_id: str, vacancy_id: str
         return applicants_video_data_dir
     else:
         logger.debug(f"Video directory from applicants {applicants_video_data_dir} does not exist.")
-        return None
+        raise ValueError(f"Video from applicants directory does not exist for bot user id: {user_record_id}, vacancy id: {vacancy_id}")
 
 
 def get_directory_for_video_from_managers(user_record_id: str, vacancy_id: str) -> Optional[Path]:

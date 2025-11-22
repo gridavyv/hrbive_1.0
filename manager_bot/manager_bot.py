@@ -481,7 +481,7 @@ async def admin_update_resume_records_with_applicants_video_status_for_all_comma
                 # Get vacancy_id for each user individually
                 user_vacancy_id = get_target_vacancy_id_from_records(record_id=user_id)
                 if user_vacancy_id:
-                    await update_resume_records_with_fresh_video_from_applicants_command(bot_user_id=user_id, vacancy_id=user_vacancy_id, application=context.application)
+                    await update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command(bot_user_id=user_id, vacancy_id=user_vacancy_id)
                     videos_updated += 1
                 else:
                     logger.debug(f"admin_update_resume_records_with_applicants_video_status_for_all_command: User {user_id} does not have a vacancy selected. Video update skipped.")
@@ -500,7 +500,7 @@ async def admin_update_resume_records_with_applicants_video_status_for_all_comma
             ) 
 
 
-async def admin_recommend_resumes_for_all_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def admin_recommend_resumes_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
     Admin command to recommend applicants with video for all users.
@@ -511,7 +511,7 @@ async def admin_recommend_resumes_for_all_command(update: Update, context: Conte
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        logger.info(f"admin_recommend_resumes_for_all_command: started. User_id: {bot_user_id}")
+        logger.info(f"admin_recommend_resumes_command: started. User_id: {bot_user_id}")
         
         #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
 
@@ -521,33 +521,32 @@ async def admin_recommend_resumes_for_all_command(update: Update, context: Conte
             logger.error(f"Unauthorized for {bot_user_id}")
             return
 
-        # ----- CREATE TASKS for recommendation of resumes with video for all users -----
+        # ----- PARSE COMMAND ARGUMENTS -----
 
-        user_ids = get_list_of_users_from_records()
-        recommendation_tasks = 0
-        for user_id in user_ids:
-            if is_vacany_data_enough_for_resume_analysis(user_id=user_id):
-                target_vacancy_id = get_target_vacancy_id_from_records(record_id=user_id)
-                resume_ids_for_recommendation = get_list_of_resume_ids_for_recommendation(bot_user_id=user_id, vacancy_id=target_vacancy_id)
-                # means manager has passed resumes with video
-                if len(resume_ids_for_recommendation) > 0:
-                    await recommend_resumes_command(bot_user_id=user_id, application=context.application)
-                    recommendation_tasks += 1
+        target_user_id = None
+        if context.args and len(context.args) == 1:
+            target_user_id = context.args[0]
+            if target_user_id:
+                if is_user_in_records(record_id=target_user_id):
+                    if is_vacany_data_enough_for_resume_analysis(user_id=target_user_id):
+                        await recommend_resumes_triggered_by_admin_command(bot_user_id=target_user_id, application=context.application)
+                        await send_message_to_user(update, context, text="Negotiations collection updated for user {target_user_id}.")
+                    else:
+                        raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis.")
                 else:
-                    logger.debug(f"admin_recommend_resumes_for_all_command: User {user_id} does not have passed resumes with video. Recommendation skipped.")
+                    raise ValueError(f"User {target_user_id} not found in records.")
             else:
-                logger.debug(f"admin_recommend_resumes_for_all_command: User {user_id} does not have enough data to analyze resumes. Recommendation skipped.")
-                
-        admin_update_text = f"Total users: {len(user_ids)}. Recomendation of resumes with video triggered for: {recommendation_tasks} users."
-        await send_message_to_user(update, context, text=admin_update_text)
+                raise ValueError(f"Invalid command arguments. Usage: /admin_recommend_resumes_for_all <user_id>")
+        else:
+            raise ValueError(f"Invalid number of arguments. Usage: /admin_recommend_resumes_for_all <user_id>")
     
     except Exception as e:
-        logger.error(f"admin_recommend_resumes_for_all_command: Failed to execute command: {e}", exc_info=True)
+        logger.error(f"admin_recommend_resumes_command: Failed to execute command: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
                 application=context.application,
-                text=f"⚠️ Error admin_recommend_resumes_for_all_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
+                text=f"⚠️ Error admin_recommend_resumes_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
 
 
@@ -1749,60 +1748,69 @@ async def source_resumes_triggered_by_admin_command(bot_user_id: str) -> None:
         # ----- DOWNLOAD RESUMES from HH.ru to "new" resumes -----
 
         #Download resumes from HH.ru and save to file
+        success_count = 0
+        fail_count = 0
+        
         for resume_id in fresh_resume_ids_from_negotiations_collection:
-            resume_file_path = new_resume_data_dir / f"resume_{resume_id}.json"
-            resume_data = get_resume_info(access_token=access_token, resume_id=resume_id)
-            # Write resume data JSON into resume_file_path
-            create_json_file_with_dictionary_content(file_path=str(resume_file_path), content_to_write=resume_data)
-            logger.debug(f"source_resumes_triggered_by_admin_command: successfully downloaded resume {resume_id} to file: {resume_file_path}")
+            try:
+                resume_file_path = new_resume_data_dir / f"resume_{resume_id}.json"
+                resume_data = get_resume_info(access_token=access_token, resume_id=resume_id)
+                # Write resume data JSON into resume_file_path
+                create_json_file_with_dictionary_content(file_path=str(resume_file_path), content_to_write=resume_data)
+                logger.debug(f"source_resumes_triggered_by_admin_command: successfully downloaded resume {resume_id} to file: {resume_file_path}")
 
-            # ----- UPDATE RESUME_RECORDS file with new resume_record_id and contact data -----
+                # ----- UPDATE RESUME_RECORDS file with new resume_record_id and contact data -----
 
-            #Create new resume record in resume records file with specific structure
-            create_record_for_new_resume_id_in_resume_records(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id)
-            logger.debug(f"source_resumes_triggered_by_admin_command: successfully created new resume record in resume records file with resume_record_id: {resume_id}")
-    
-            # ----- ENRICH RESUME_RECORDS file with resume data -----
+                #Create new resume record in resume records file with specific structure
+                create_record_for_new_resume_id_in_resume_records(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id)
+                logger.debug(f"source_resumes_triggered_by_admin_command: successfully created new resume record in resume records file with resume_record_id: {resume_id}")
+        
+                # ----- ENRICH RESUME_RECORDS file with resume data -----
 
-            # Update resume records with new resume data
-            negotiation_id = tmp_resume_id_and_negotiation_id_dict[resume_id]
-            first_name = resume_data.get("first_name", "")
-            last_name = resume_data.get("last_name", "")
-            
-            # Safely extract phone and email from contact array
-            phone = ""
-            email = ""
-            contacts_list = resume_data.get("contact", [])
-            
-            for contact in contacts_list:
-                # Handle both "value" and "contact_value" keys
-                contact_data = contact.get("contact_value") or contact.get("value")
+                # Update resume records with new resume data
+                negotiation_id = tmp_resume_id_and_negotiation_id_dict[resume_id]
+                first_name = resume_data.get("first_name", "")
+                last_name = resume_data.get("last_name", "")
                 
-                # Skip if contact_data is None or not a string
-                if not isinstance(contact_data, str):
-                    continue
+                # Safely extract phone and email from contact array
+                phone = ""
+                email = ""
+                contacts_list = resume_data.get("contact", [])
                 
-                # Filter email by '@' sign
-                if "@" in contact_data:
-                    email = contact_data
-                elif not phone:
-                    # If it's a string but not email, assume it's phone (if phone not set yet)
-                    phone = contact_data
-            
-            # Log warning if contact data is missing
-            if not phone:
-                logger.warning(f"source_resumes_triggered_by_admin_command: No phone found for resume {resume_id}")
-            if not email:
-                logger.debug(f"source_resumes_triggered_by_admin_command: No email found for resume {resume_id}")
+                for contact in contacts_list:
+                    # Handle both "value" and "contact_value" keys
+                    contact_data = contact.get("contact_value") or contact.get("value")
+                    
+                    # Skip if contact_data is None or not a string
+                    if not isinstance(contact_data, str):
+                        continue
+                    
+                    # Filter email by '@' sign
+                    if "@" in contact_data:
+                        email = contact_data
+                    elif not phone:
+                        # If it's a string but not email, assume it's phone (if phone not set yet)
+                        phone = contact_data
+                
+                # Log warning if contact data is missing
+                if not phone:
+                    logger.warning(f"source_resumes_triggered_by_admin_command: No phone found for resume {resume_id}")
+                if not email:
+                    logger.debug(f"source_resumes_triggered_by_admin_command: No email found for resume {resume_id}")
 
-            update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="negotiation_id", value=negotiation_id) # ValueError raised if fails
-            update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="first_name", value=first_name) # ValueError raised if fails
-            update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="last_name", value=last_name) # ValueError raised if fails
-            update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="phone", value=phone) # ValueError raised if fails
-            update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="email", value=email) # ValueError raised if fails
-            logger.debug(f"source_resumes_triggered_by_admin_command: successfully updated resume records file with new resume_record_id: {resume_id}")
+                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="negotiation_id", value=negotiation_id) # ValueError raised if fails
+                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="first_name", value=first_name) # ValueError raised if fails
+                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="last_name", value=last_name) # ValueError raised if fails
+                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="phone", value=phone) # ValueError raised if fails
+                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="email", value=email) # ValueError raised if fails
+                logger.debug(f"source_resumes_triggered_by_admin_command: successfully updated resume records file with new resume_record_id: {resume_id}")
+                success_count += 1
+            except Exception as e:
+                logger.error(f"source_resumes_triggered_by_admin_command: Failed to process resume {resume_id} for user {bot_user_id}: {e}", exc_info=True)
+                fail_count += 1
+                continue
 
-        logger.info(f"source_resumes_triggered_by_admin_command: successfully completed for user_id: {bot_user_id}")
+        logger.info(f"source_resumes_triggered_by_admin_command: Completed for user_id: {bot_user_id}. Success: {success_count}, Failed: {fail_count}, Total: {len(fresh_resume_ids_from_negotiations_collection)}")
     
     except Exception as e:
         logger.error(f"source_resumes_triggered_by_admin_command: Failed to source resumes for user_id {bot_user_id}: {e}", exc_info=True)
@@ -1816,46 +1824,48 @@ async def analyze_resume_triggered_by_admin_command(bot_user_id: str) -> None:
     Triggers 'send_message_to_applicants_command' and 'change_employer_state_command' for each resume.
     Does not trigger any other commands once done.
     """
-
-    logger.info(f"analyze_resume_triggered_by_admin_command: started. User_id: {bot_user_id}")
-
-    # ----- IDENTIFY USER and pull required data from records -----
     
-    target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
-
-    # ----- PREPARE paths and files for AI analysis -----
-
-    #Get files paths for AI analysis
-    vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
-    vacancy_description_file_path = vacancy_data_dir / "vacancy_description.json"
-    sourcing_criterias_file_path = vacancy_data_dir / "sourcing_criterias.json"
-    resume_analysis_prompt_file_path = Path(PROMPT_DIR) / "for_resume.txt"
-    resume_data_dir = get_resume_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
-    new_resume_data_path = Path(resume_data_dir) / "new"
-    passed_resume_data_path = Path(resume_data_dir) / "passed"
-    failed_resume_data_path = Path(resume_data_dir) / "failed"
-
-    # Load inputs for AI analysis
-    with open(vacancy_description_file_path, "r", encoding="utf-8") as f:
-        vacancy_description = json.load(f)
-    with open(sourcing_criterias_file_path, "r", encoding="utf-8") as f:
-        sourcing_criterias = json.load(f)
-    with open(resume_analysis_prompt_file_path, "r", encoding="utf-8") as f:
-        resume_analysis_prompt = f.read() 
-
-    # ----- QUEUE RESUMES for AI ANALYSIS -----
-
-    # Add resumes to AI analysis queue
     try:
+        logger.info(f"analyze_resume_triggered_by_admin_command: started. User_id: {bot_user_id}")
+
+        # ----- IDENTIFY USER and pull required data from records -----
+        
+        target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
+
+        # ----- PREPARE paths and files for AI analysis -----
+
+        #Get files paths for AI analysis
+        vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
+        vacancy_description_file_path = vacancy_data_dir / "vacancy_description.json"
+        sourcing_criterias_file_path = vacancy_data_dir / "sourcing_criterias.json"
+        resume_analysis_prompt_file_path = Path(PROMPT_DIR) / "for_resume.txt"
+        resume_data_dir = get_resume_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
+        new_resume_data_path = Path(resume_data_dir) / "new"
+        passed_resume_data_path = Path(resume_data_dir) / "passed"
+        failed_resume_data_path = Path(resume_data_dir) / "failed"
+
+        # Load inputs for AI analysis
+        with open(vacancy_description_file_path, "r", encoding="utf-8") as f:
+            vacancy_description = json.load(f)
+        with open(sourcing_criterias_file_path, "r", encoding="utf-8") as f:
+            sourcing_criterias = json.load(f)
+        with open(resume_analysis_prompt_file_path, "r", encoding="utf-8") as f:
+            resume_analysis_prompt = f.read() 
+
+        # ----- QUEUE RESUMES for AI ANALYSIS -----
+
+        # Add resumes to AI analysis queue
         new_resume_data_path.mkdir(parents=True, exist_ok=True)
         new_resume_json_paths_list = list(new_resume_data_path.glob("*.json"))
         num_of_new_resumes = len(new_resume_json_paths_list)
         logger.debug(f"Total resumes: {num_of_new_resumes} in directory {new_resume_data_path}")
         queued_resumes = 0
+        failed_resumes = 0
+        
         # Open each resume file and add AI analysis task to queue
         for resume_json_path in new_resume_json_paths_list:
-            resume_id = resume_json_path.stem.split("_")[1]
             try:
+                resume_id = resume_json_path.stem.split("_")[1]
                 with open(resume_json_path, "r", encoding="utf-8") as rf:
                     resume_json = json.load(rf)
                 
@@ -1876,13 +1886,17 @@ async def analyze_resume_triggered_by_admin_command(bot_user_id: str) -> None:
                 )
                 queued_resumes += 1
                 logger.info(f"Added resume {resume_id} to analysis queue. Total queued: {queued_resumes} out of {num_of_new_resumes}")
-            except Exception as inner_e:
-                logger.error(f"Failed to queue resume analysis for '{resume_json_path}': {inner_e}", exc_info=True)
-    except Exception as e:
-        logger.error(f"Failed to queue resumes for analysis in directory {new_resume_data_path}: {e}", exc_info=True)
+            except Exception as e:
+                logger.error(f"Failed to queue resume analysis for '{resume_json_path}': {e}", exc_info=True)
+                failed_resumes += 1
+                continue
 
-    # ----- COMMUNICATE RESULT of QUEUING RESUMES -----
-    logger.info(f"Added {queued_resumes} out of {num_of_new_resumes} resumes to analysis queue. Analysis is performed in background.")
+        # ----- COMMUNICATE RESULT of QUEUING RESUMES -----
+        logger.info(f"analyze_resume_triggered_by_admin_command: Completed for user_id: {bot_user_id}. Success: {queued_resumes}, Failed: {failed_resumes}, Total: {num_of_new_resumes}")
+    
+    except Exception as e:
+        logger.error(f"analyze_resume_triggered_by_admin_command: Failed. user_id {bot_user_id}: {e}", exc_info=True)
+        raise
 
 
 async def resume_analysis_from_ai_to_user_sort_resume(
@@ -1950,6 +1964,7 @@ async def resume_analysis_from_ai_to_user_sort_resume(
             # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
     except Exception as e:
         logger.error(f"Failed to process resume analysis for {resume_id}: {e}", exc_info=True)
+        raise
 
 
 async def send_message_to_applicant_command(bot_user_id: str, resume_id: str) -> None:
@@ -2012,47 +2027,47 @@ async def change_employer_state_command(bot_user_id: str, resume_id: str) -> Non
         logger.error(f"Failed to change collection status for negotiation ID {negotiation_id}: {status_err}", exc_info=True)
 
 
-async def update_resume_records_with_fresh_video_from_applicants_command(bot_user_id: str, vacancy_id: str, application: Optional[Application] = None) -> None:
+async def update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command(bot_user_id: str, vacancy_id: str) -> None:
     # TAGS: [resume_related]
     """Update resume records with fresh videos from applicants directory.
     Sends notification to admin if fails"""
 
-    logger.info(f"update_resume_records_with_fresh_video_from_applicants_command started. user_id: {bot_user_id}")
+    logger.info(f"update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command: started. user_id: {bot_user_id}")
     
     try:
         # ----- PREPARE PATHS to video files -----
 
-        video_from_applicants_dir = get_directory_for_video_from_applicants(bot_user_id=bot_user_id, vacancy_id=vacancy_id)
-        if video_from_applicants_dir is None:
-            raise ValueError(f"update_resume_records_with_fresh_video_from_applicants_command: video_from_applicants directory is not found for bot user id: {bot_user_id}, vacancy id: {vacancy_id}")
+        video_from_applicants_dir = get_directory_for_video_from_applicants(bot_user_id=bot_user_id, vacancy_id=vacancy_id) # ValueError raised if fails
         all_video_paths_list = list(video_from_applicants_dir.glob("*.mp4"))
         fresh_videos_list = []
+        success_count = 0
+        fail_count = 0
         
         for video_path in all_video_paths_list:
-            # Parse video path to get resume ID. Video shall have the following structure: 
-            # - type #1: applicant_{applicant_user_id}_resume_{resume_id}_time_{timestamp}_note.mp4
-            # - type #2: - applicant_{applicant_user_id}_resume_{resume_id}_time_{timestamp}.mp4
-            resume_id = video_path.stem.split("_")[3]
-            logger.debug(f"update_resume_records_with_fresh_video_from_applicants_command: Found applicant video. Video path: {video_path} / Resume ID: {resume_id}")
-            # If video not recorded, update list and update resume records
-            if not is_applicant_video_recorded(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_id=resume_id):
-                fresh_videos_list.append(resume_id)
-                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_video_received", value="yes")
-                update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_video_path", value=str(video_path))
-                # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
-        logger.debug(f"update_resume_records_with_fresh_video_from_applicants_command: {len(fresh_videos_list)} fresh videos have been found and updated in resume records")
+            try:
+                # Parse video path to get resume ID. Video shall have the following structure: 
+                # - type #1: applicant_{applicant_user_id}_resume_{resume_id}_time_{timestamp}_note.mp4
+                # - type #2: - applicant_{applicant_user_id}_resume_{resume_id}_time_{timestamp}.mp4
+                resume_id = video_path.stem.split("_")[3]
+                logger.debug(f"update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command: Found applicant video. Video path: {video_path} / Resume ID: {resume_id}")
+                # If video not recorded, update list and update resume records
+                if not is_applicant_video_recorded(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_id=resume_id):
+                    fresh_videos_list.append(resume_id)
+                    update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_video_received", value="yes") # ValueError raised if fails
+                    update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_video_path", value=str(video_path)) # ValueError raised if fails
+                    success_count += 1
+            except Exception as e:
+                logger.error(f"update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command: Failed to process video {video_path} for user {bot_user_id}: {e}", exc_info=True)
+                fail_count += 1
+                continue
+        
+        logger.info(f"update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command: Completed for user_id: {bot_user_id}. Success: {success_count}, Failed: {fail_count}, Total: {len(all_video_paths_list)}")
     
     except Exception as e:
-        logger.error(f"update_resume_records_with_fresh_video_from_applicants_command: Failed to update resume records with fresh videos from applicants: {e}", exc_info=True)
-        # Send notification to admin about the error
-        if application:
-            await send_message_to_admin(
-                application=application,
-                text=f"⚠️ Error update_resume_records_with_fresh_video_from_applicants_command: {e}\nUser ID: {bot_user_id}\nVacancy ID: {vacancy_id}"
-            )
+        logger.error(f"update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command: Failed. user_id {bot_user_id}: {e}", exc_info=True)
+        raise
 
-
-async def recommend_resumes_command(bot_user_id: str, application: Application) -> None:
+async def recommend_resumes_triggered_by_admin_command(bot_user_id: str, application: Application) -> None:
     # TAGS: [recommendation_related]
     """Recommend resumes. Criteria:
     1. Resume is passed
@@ -2060,7 +2075,7 @@ async def recommend_resumes_command(bot_user_id: str, application: Application) 
     3. Resume is not recommended yet
     Sends notification to admin if fails"""
 
-    logger.info(f"recommend_resumes_command: started. user_id: {bot_user_id}")
+    logger.info(f"recommend_resumes_triggered_by_admin_command: started. user_id: {bot_user_id}")
 
     # ----- IDENTIFY USER and pull required data from records -----
         
@@ -2087,7 +2102,7 @@ async def recommend_resumes_command(bot_user_id: str, application: Application) 
         # ----- GET LIST of RESUME IDs that passed and have video -----
 
         resume_ids_for_recommendation = get_list_of_resume_ids_for_recommendation(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
-        logger.debug(f"recommend_resumes_command: List of resume IDs for recommendation has been fetched: {resume_ids_for_recommendation}.")
+        logger.debug(f"recommend_resumes_triggered_by_admin_command: List of resume IDs for recommendation has been fetched: {resume_ids_for_recommendation}.")
 
         # ----- COMMUNICATE SUMMARY of recommendation -----
 
@@ -2095,10 +2110,10 @@ async def recommend_resumes_command(bot_user_id: str, application: Application) 
         # if there are no suitable applicants, communicate the result
         if num_resume_ids_for_recommendation == 0:
             if application and application.bot:
-                logger.info(f"recommend_resumes_command: No suitable resumes found for recommendation. Sending message to user {bot_user_id}.")
+                logger.info(f"recommend_resumes_triggered_by_admin_command: No suitable resumes found for recommendation. Sending message to user {bot_user_id}.")
                 await application.bot.send_message(chat_id=int(bot_user_id), text=f"Вакансия: '{target_vacancy_name}'.\nПока нет подходящих кандидатов, записавших видео визитку.")
             else:
-                logger.warning(f"recommend_resumes_command: Cannot send message to user {bot_user_id}: application or bot instance not provided")
+                logger.warning(f"recommend_resumes_triggered_by_admin_command: Cannot send message to user {bot_user_id}: application or bot instance not provided")
             return
 
         # ----- COMMUNICATE RESULT of resumes with video -----
@@ -2118,14 +2133,14 @@ async def recommend_resumes_command(bot_user_id: str, application: Application) 
             
             if application and application.bot:
                 await application.bot.send_message(chat_id=int(bot_user_id), text=recommendation_text, parse_mode=ParseMode.HTML)
-                logger.info(f"recommend_resumes_command: Recomendation text for resume {resume_id} has been successfully sent to user {bot_user_id}")
+                logger.info(f"recommend_resumes_triggered_by_admin_command: Recomendation text for resume {resume_id} has been successfully sent to user {bot_user_id}")
 
                 await application.bot.send_video(chat_id=int(bot_user_id), video=str(applicant_video_file_path))
-                logger.info(f"recommend_resumes_command: Video for resume {resume_id} has been successfully sent to user {bot_user_id}")
+                logger.info(f"recommend_resumes_triggered_by_admin_command: Video for resume {resume_id} has been successfully sent to user {bot_user_id}")
 
                 update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="resume_recommended", value="yes")
                 # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
-                logger.info(f"recommend_resumes_command: Resume records for resume {resume_id} has been successfully updated with recommended status 'yes'")
+                logger.info(f"recommend_resumes_triggered_by_admin_command: Resume records for resume {resume_id} has been successfully updated with recommended status 'yes'")
                 
                 # ----- SEND BUTTON TO INVITE APPLICANT TO INTERVIEW -----
                 # cannot use "questionnaire_service.py", because requires update and context objects
@@ -2150,13 +2165,8 @@ async def recommend_resumes_command(bot_user_id: str, application: Application) 
             else:
                 raise ValueError(f"Missing required application or bot instance for sending message to user {bot_user_id}")    
     except Exception as e:
-        logger.error(f"recommend_resumes_command: Failed: {e}", exc_info=True)
-        # Send notification to admin about the error
-        if application:
-            await send_message_to_admin(
-                application=application,
-                text=f"⚠️ Error recommend_resumes_command: {e}\nUser ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
-            )
+        logger.error(f"recommend_resumes_triggered_by_admin_command: Failed: {e}", exc_info=True)
+        raise
 
 
 async def handle_invite_to_interview_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

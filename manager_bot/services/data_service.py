@@ -261,11 +261,11 @@ def get_directory_for_video_from_applicants(bot_user_id: str, vacancy_id: str) -
     vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=vacancy_id)
     applicants_video_data_dir = vacancy_data_dir / "video_from_applicants"
     if applicants_video_data_dir.exists():
-        logger.debug(f"get_directory_for_video_from_applicants: 'video_from_applicants' directory {applicants_video_data_dir} exists.")
+        logger.debug(f"'video_from_applicants' directory {applicants_video_data_dir} exists.")
         return applicants_video_data_dir
     else:
-        logger.debug(f"get_directory_for_video_from_applicants: 'video_from_applicants' directory {applicants_video_data_dir} does not exist.")
-        return None
+        logger.debug(f"'video_from_applicants' directory {applicants_video_data_dir} does not exist.")
+        raise ValueError(f"Video from applicants directory does not exist for bot user id: {bot_user_id}, vacancy id: {vacancy_id}")
 
 
 def get_user_directory(bot_user_id: str) -> Path:
