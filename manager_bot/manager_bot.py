@@ -230,7 +230,7 @@ async def admin_anazlyze_sourcing_criterais_command(update: Update, context: Con
                     if is_vacancy_description_recieved(record_id=target_user_id):
                         logger.debug(f"User {target_user_id} has vacancy description received.")
                         await define_sourcing_criterias_triggered_by_admin_command(bot_user_id=target_user_id)
-                        await send_message_to_user(update, context, text=f"Sourcing criterias analyzed for user {target_user_id}.")
+                        await send_message_to_user(update, context, text=f"Taks for analysing sourcing criterias is in task_queue for user {target_user_id}.")
                     else:
                         logger.debug(f"User {target_user_id} does not have vacancy description received.")
                         raise ValueError(f"User {target_user_id} does not have vacancy description received.")
@@ -1584,6 +1584,7 @@ async def define_sourcing_criterias_triggered_by_admin_command(bot_user_id: str)
         # Add AI analysis task to queue
         await ai_task_queue.put(
             get_sourcing_criterias_from_ai_and_save_to_file,
+            bot_user_id,
             vacancy_description,
             prompt_text,
             vacancy_data_dir,
