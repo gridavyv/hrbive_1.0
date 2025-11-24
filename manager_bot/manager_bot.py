@@ -98,7 +98,7 @@ from services.hh_service import (
     filter_open_employer_vacancies,
     get_vacancy_description_from_hh,
     get_negotiations_collection_with_status_response,
-    change_collection_status_of_negotiation,
+    change_negotiation_collection_status_to_consider,
     send_negotiation_message,
     get_resume_info,
     get_available_employer_states_and_collections_negotiations,
@@ -1682,7 +1682,7 @@ async def source_negotiations_triggered_by_admin_command(bot_user_id: str) -> No
         # ----- PULL COLLECTIONS of negotiations and save it to file -----
 
         #Define what employer_state to use for pulling the collection
-        employer_state = TARGET_EMPLOYER_STATE_COLLECTION_STATUS
+        employer_state = EMPLOYER_STATE_RESPONSE
         #Build path to the file for the collection of negotiations data
         vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
         negotiations_collection_file_path = vacancy_data_dir / f"negotiations_collections_{employer_state}.json"
@@ -1708,12 +1708,12 @@ async def source_resumes_triggered_by_admin_command(bot_user_id: str) -> None:
         
         access_token = get_access_token_from_records(bot_user_id=bot_user_id)
         target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
-        target_employer_state = TARGET_EMPLOYER_STATE_COLLECTION_STATUS
+        target_employer_state = EMPLOYER_STATE_RESPONSE
         
         # ----- CHECK IF NEGOTIATIONS COLLECTION file exists, otherwise trigger source negotiations command -----
         
         if not is_negotiations_collection_file_exists(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, target_employer_state=target_employer_state):
-            raise ValueError(f"Negotiations collection file does not exist for user {bot_user_id} and vacancy {target_vacancy_id}")
+            raise ValueError(f"source_resumes_triggered_by_admin_command: Negotiations collection with status {target_employer_state} file does not exist for user {bot_user_id} and vacancy {target_vacancy_id}")
 
         # ----- CHECK IF RESUME RECORDS file exists, otherwise trigger source resumes command -----
         
@@ -1730,20 +1730,19 @@ async def source_resumes_triggered_by_admin_command(bot_user_id: str) -> None:
         with open(negotiations_collection_file_path, "r", encoding="utf-8") as f:
             negotiations_collection_data = json.load(f)
 
-        fresh_resume_ids_from_negotiations_collection = []
-        tmp_resume_id_and_negotiation_id_dict = {} # used to update resume records file with negotiation_id
+        fresh_resume_id_and_negotiation_id_dict = {} # used to update resume records file with negotiation_id
         
         for negotiations_collection_item in negotiations_collection_data["items"]:
+            negotiation_id = negotiations_collection_item["id"]
             resume_id = negotiations_collection_item["resume"]["id"]
             if not is_resume_id_exists_in_resume_records(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id):
-                fresh_resume_ids_from_negotiations_collection.append(resume_id)
-                tmp_resume_id_and_negotiation_id_dict[resume_id] = negotiations_collection_item["id"]
+                fresh_resume_id_and_negotiation_id_dict[resume_id] = negotiation_id
         
-        logger.debug(f"source_resumes_triggered_by_admin_command: number of fresh resumes found in negotiations collection: {len(fresh_resume_ids_from_negotiations_collection)}")
-        logger.debug(f"source_resumes_triggered_by_admin_command: fresh resume IDs: {fresh_resume_ids_from_negotiations_collection}")
+        logger.debug(f"source_resumes_triggered_by_admin_command: fresh resume ID and negotiation ID dictionary: {fresh_resume_id_and_negotiation_id_dict}")
 
-        if not fresh_resume_ids_from_negotiations_collection:
-            raise ValueError(f"No fresh resumes found in negotiations collection for user {bot_user_id} and vacancy {target_vacancy_id}")
+        #if not fresh_resume_ids_from_negotiations_collection:
+        if not fresh_resume_id_and_negotiation_id_dict:
+            raise ValueError(f"source_resumes_triggered_by_admin_command: No fresh resumes found in negotiations collection for user {bot_user_id} and vacancy {target_vacancy_id}")
 
         # ----- PREPARE RESUME directory for 'new' resumes -----
 
@@ -1757,7 +1756,8 @@ async def source_resumes_triggered_by_admin_command(bot_user_id: str) -> None:
         success_count = 0
         fail_count = 0
         
-        for resume_id in fresh_resume_ids_from_negotiations_collection:
+        #for resume_id in fresh_resume_ids_from_negotiations_collection:
+        for resume_id, negotiation_id in fresh_resume_id_and_negotiation_id_dict.items():
             try:
                 resume_file_path = new_resume_data_dir / f"resume_{resume_id}.json"
                 resume_data = get_resume_info(access_token=access_token, resume_id=resume_id)
@@ -1774,7 +1774,6 @@ async def source_resumes_triggered_by_admin_command(bot_user_id: str) -> None:
                 # ----- ENRICH RESUME_RECORDS file with resume data -----
 
                 # Update resume records with new resume data
-                negotiation_id = tmp_resume_id_and_negotiation_id_dict[resume_id]
                 first_name = resume_data.get("first_name", "")
                 last_name = resume_data.get("last_name", "")
                 
@@ -2020,15 +2019,13 @@ async def change_employer_state_command(bot_user_id: str, resume_id: str) -> Non
    # ----- CHANGE EMPLOYER STATE  -----
 
     #await update.message.reply_text(f"Изменяю статус приглашения кандидата на {NEW_EMPLOYER_STATE}...")
-    logger.debug(f"Changing collection status of negotiation ID: {negotiation_id} to {NEW_EMPLOYER_STATE_COLLECTION_STATUS}")
+    logger.debug(f"Changing collection status of negotiation ID: {negotiation_id} to {EMPLOYER_STATE_CONSIDER}")
     try:
-        change_collection_status_of_negotiation(
+        change_negotiation_collection_status_to_consider(
             access_token=access_token,
-            negotiation_id=negotiation_id,
-            collection_name=TARGET_EMPLOYER_STATE_COLLECTION_STATUS,
-            new_state=NEW_EMPLOYER_STATE_COLLECTION_STATUS
+            negotiation_id=negotiation_id
         )
-        logger.info(f"Collection status of negotiation ID: {negotiation_id} has been successfully changed to {NEW_EMPLOYER_STATE_COLLECTION_STATUS}")
+        logger.info(f"Collection status of negotiation ID: {negotiation_id} has been successfully changed to {EMPLOYER_STATE_CONSIDER}")
     except Exception as status_err:
         logger.error(f"Failed to change collection status for negotiation ID {negotiation_id}: {status_err}", exc_info=True)
 

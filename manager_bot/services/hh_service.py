@@ -9,7 +9,7 @@ from telegram._passport.passportdata import PassportData
 
 from services.data_service import create_json_file_with_dictionary_content
 
-from services.constants import TARGET_EMPLOYER_STATE_COLLECTION_STATUS
+from services.constants import EMPLOYER_STATE_RESPONSE, EMPLOYER_STATE_CONSIDER
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +221,7 @@ def get_negotiations_collection_with_status_response(access_token: str, vacancy_
         page = 0
         per_page = 50
         all_items = []
-        collection = TARGET_EMPLOYER_STATE_COLLECTION_STATUS
+        collection = EMPLOYER_STATE_RESPONSE
 
         url = f"https://api.hh.ru/negotiations/{collection}"
         headers={"Authorization": f"Bearer {access_token}", "User-Agent": USER_AGENT}
@@ -335,22 +335,21 @@ def get_negotiations_messages(access_token: str, negotiation_id: str) -> Optiona
         return None
 
 
-def change_collection_status_of_negotiation(
+def change_negotiation_collection_status_to_consider(
     access_token: str, 
     negotiation_id: str,
-    collection_name: str,
-    new_state: str):
+    ):
     try:
-        url = f"https://api.hh.ru/negotiations/{collection_name}/{negotiation_id}"
+        target_collection_name = EMPLOYER_STATE_CONSIDER
+        url = f"https://api.hh.ru/negotiations/{target_collection_name}/{negotiation_id}"
         r = requests.put(
             url,
             headers={"Authorization": f"Bearer {access_token}", "User-Agent": USER_AGENT},
             timeout=15,
-            json={"collection": collection_name, "status": new_state}
         )
         r.raise_for_status()
         if r.status_code in (200, 201, 204):
-            logger.debug(f"request successful: {r.text}")
+            logger.debug(f"change_negotiation_collection_status_to_consider: request successful: {r.text}")
             # Some HH endpoints return 204 No Content or empty body on success
             if r.text and r.headers.get("Content-Type", "").startswith("application/json"):
                 try:
@@ -359,13 +358,13 @@ def change_collection_status_of_negotiation(
                     pass
             return {"status": "success", "code": r.status_code}
         else:
-            logger.error(f"request failed: {r.status_code} {r.text}")
+            logger.error(f"change_negotiation_collection_status_to_consider: request failed: {r.status_code} {r.text}")
             return None
     except Exception as e:
         if isinstance(e, requests.exceptions.HTTPError):
-            logger.error(f"HTTP error changing negotiation status: {e.response.status_code} - {e.response.text}")
+            logger.error(f"HTTP error change_negotiation_collection_status_to_consider: {e.response.status_code} - {e.response.text}")
         else:
-            logger.error(f"Error changing negotiation status: {e}", exc_info=True)
+            logger.error(f"Error change_negotiation_collection_status_to_consider: {e}", exc_info=True)
         return None
 
 
