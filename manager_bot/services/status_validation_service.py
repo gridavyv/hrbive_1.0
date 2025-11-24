@@ -103,8 +103,13 @@ def is_vacancy_description_recieved(record_id: str) -> bool:
         records = json.load(f)
     if record_id in records:
         if records[record_id]["vacancy_description_recieved"] == "yes":
+            logger.debug(f"is_vacancy_description_recieved: 'bot_user_id': {record_id} has target vacancy description received.")
             return True
-        logger.debug(f"'bot_user_id': {record_id} has no target vacancy selected.")
+        else:
+            logger.debug(f"is_vacancy_description_recieved: 'bot_user_id': {record_id} has no target vacancy description received.")
+            return False
+    else:
+        logger.debug(f"is_vacancy_description_recieved: 'bot_user_id': {record_id} not found in {users_records_file_path}")
     return False
 
 
