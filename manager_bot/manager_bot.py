@@ -97,7 +97,7 @@ from services.hh_service import (
     get_employer_vacancies_from_hh,
     filter_open_employer_vacancies,
     get_vacancy_description_from_hh,
-    get_negotiations_by_collection,
+    get_negotiations_collection_with_status_response,
     change_collection_status_of_negotiation,
     send_negotiation_message,
     get_resume_info,
@@ -1682,13 +1682,12 @@ async def source_negotiations_triggered_by_admin_command(bot_user_id: str) -> No
         # ----- PULL COLLECTIONS of negotiations and save it to file -----
 
         #Define what employer_state to use for pulling the collection
-        target_employer_state = TARGET_EMPLOYER_STATE_COLLECTION_STATUS
+        employer_state = TARGET_EMPLOYER_STATE_COLLECTION_STATUS
         #Build path to the file for the collection of negotiations data
         vacancy_data_dir = get_vacancy_directory(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id)
-        negotiations_collection_file_path = vacancy_data_dir / f"negotiations_collections_{target_employer_state}.json"
-        
-        #Get collection of negotiations data for the target collection status "consider"
-        negotiations_collection_data = get_negotiations_by_collection(access_token=access_token, vacancy_id=target_vacancy_id, collection=target_employer_state)
+        negotiations_collection_file_path = vacancy_data_dir / f"negotiations_collections_{employer_state}.json"
+        #Get collection of negotiations data for the target collection status "response"
+        negotiations_collection_data = get_negotiations_collection_with_status_response(access_token=access_token, vacancy_id=target_vacancy_id)
         # Write negotiations data JSON into negotiations_file_path
         # If file already exists, it will be overwritten.
         create_json_file_with_dictionary_content(file_path=str(negotiations_collection_file_path), content_to_write=negotiations_collection_data)

@@ -9,6 +9,8 @@ from telegram._passport.passportdata import PassportData
 
 from services.data_service import create_json_file_with_dictionary_content
 
+from services.constants import TARGET_EMPLOYER_STATE_COLLECTION_STATUS
+
 logger = logging.getLogger(__name__)
 
 HH_CLIENT_ID     = os.getenv("HH_CLIENT_ID")
@@ -205,6 +207,87 @@ def get_negotiations_by_collection(access_token: str, vacancy_id: str, collectio
         return None
 
 
+def get_negotiations_collection_with_status_response(access_token: str, vacancy_id: str) -> Optional[dict]:
+    """
+    Get all pages of the negotiations collection with status "response".
+    Returns a dictionary with the following keys:
+    - items: list of items
+    - found: total number of items
+    - pages: total number of pages
+    - per_page: number of items per page
+    More info on the HH API: Список откликов/приглашений коллекции
+    https://api.hh.ru/openapi/redoc#tag/Otklikipriglasheniya-rabotodatelya/operation/get-collection-negotiations-list"""
+    try:
+        page = 0
+        per_page = 50
+        all_items = []
+        collection = TARGET_EMPLOYER_STATE_COLLECTION_STATUS
+
+        url = f"https://api.hh.ru/negotiations/{collection}"
+        headers={"Authorization": f"Bearer {access_token}", "User-Agent": USER_AGENT}
+        params = {
+                "vacancy_id": vacancy_id,
+                "per_page": per_page,
+                "page": page,   # не page_number!
+            }
+        
+        # Fetch first page
+        r = requests.get(
+            url,
+            headers=headers,
+            timeout=15,
+            params=params
+        )
+        r.raise_for_status()
+        
+        if r.status_code == 200:
+            data = r.json()
+            total_pages = data.get("pages", 1)
+            found = data.get("found", 0)
+            
+            # Collect items from first page
+            items = data.get("items", [])
+            all_items.extend(items)
+            logger.debug(f"get_negotiations_collection_with_status_response: page {page} fetched successfully ({len(items)} items)")
+            
+            # Fetch remaining pages
+            while page + 1 < total_pages:
+                page += 1
+                r = requests.get(
+                    url,
+                    headers={"Authorization": f"Bearer {access_token}", "User-Agent": USER_AGENT},
+                    timeout=15,
+                    params={"vacancy_id": vacancy_id, "per_page": 50, "page": page}
+                )
+                r.raise_for_status()
+                
+                if r.status_code == 200:
+                    data = r.json()
+                    items = data.get("items", [])
+                    all_items.extend(items)
+                    logger.debug(f"get_negotiations_collection_with_status_response: page {page} fetched successfully ({len(items)} items)")
+                else:
+                    logger.error(f"get_negotiations_collection_with_status_response: request failed for page {page}: {r.status_code} {r.text}")
+            # Combine all pages into a single structure
+            combined_data = {
+                "items": all_items,
+                "found": found,
+                "pages": total_pages,
+                "per_page": per_page
+            }            
+            logger.debug(f"get_negotiations_collection_with_status_response: Returning combined data")
+            return combined_data
+        else:
+            logger.error(f"get_negotiations_collection_with_status_response: request failed: {r.status_code} {r.text}. Returning None.")
+            return None
+    except Exception as e:
+        if isinstance(e, requests.exceptions.HTTPError):
+            logger.error(f"HTTP error get_negotiations_collection_with_status_response: {e.response.status_code} - {e.response.text}")
+        else:
+            logger.error(f"Error get_negotiations_collection_with_status_response: {e}", exc_info=True)
+        return None
+
+
 def get_negotiations_by_state(access_token: str, vacancy_id: str, state_id: str) -> Optional[dict]:
     """Get negotiations by state to see what collections are available"""
     try:
@@ -391,14 +474,3 @@ def get_dictionary_from_hh(access_token: str):
         else:
             logger.error(f"Error getting dictionary: {e}", exc_info=True)
 
-
-if __name__ == "__main__":
-    #exchange_code_for_token(CODE_2)
-    #get_user_info(ACCESS_TOKEN_2)
-    #get_employer_vacancies(ACCESS_TOKEN_2)
-    #print(get_vacancy_info(access_token="", vacancy_id=""))
-    #get_negotiations_list(ACCESS_TOKEN_2)
-    #get_negotiations(ACCESS_TOKEN_2, VACANCY_ID_2)
-    #get_negotiations_by_collection(ACCESS_TOKEN_2, VACANCY_ID_2, "consider")
-    #hh_dict = get_hh_dictionary(ACCESS_TOKEN_2, "education")
-    pass
