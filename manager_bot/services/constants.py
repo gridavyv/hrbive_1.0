@@ -21,7 +21,11 @@ BASE_URL = "https://hrvibe-hh-callback-endpoint.onrender.com"
 # ----- VIDEO DIRECTORIES CONSTANTS -----
 
 
-BOT_FOR_APPLICANTS_USERNAME="MeetYourManagerBot"
+BOT_FOR_APPLICANTS_USERNAME="HRVibeApplicantBot"
+BOT_FOR_MANAGERS_USERNAME="HRVibeManagerBot"
+
+
+
 
 CALLBACK_ENDPOINT_RESPONSE_WHEN_RECORDS_NOT_READY = {'detail': 'State not ready or not found'}
 
