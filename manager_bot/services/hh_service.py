@@ -242,11 +242,12 @@ def get_negotiations_collection_with_status_response(access_token: str, vacancy_
         
         if r.status_code == 200:
             data = r.json()
-            total_pages = data.get("pages", 1)
-            found = data.get("found", 0)
-            
+            total_pages = data["pages"] # will raise KeyError if not found
+            logger.debug(f"get_negotiations_collection_with_status_response: total pages found in response: {total_pages}")
+            found = data["found"] # will raise KeyError if not found
+            logger.debug(f"get_negotiations_collection_with_status_response: total items found in response: {found}")
             # Collect items from first page
-            items = data.get("items", [])
+            items = data["items"] # will raise KeyError if not found
             all_items.extend(items)
             logger.debug(f"get_negotiations_collection_with_status_response: page {page} fetched successfully ({len(items)} items)")
             
@@ -263,7 +264,7 @@ def get_negotiations_collection_with_status_response(access_token: str, vacancy_
                 
                 if r.status_code == 200:
                     data = r.json()
-                    items = data.get("items", [])
+                    items = data["items"] # will raise KeyError if not found
                     all_items.extend(items)
                     logger.debug(f"get_negotiations_collection_with_status_response: page {page} fetched successfully ({len(items)} items)")
                 else:

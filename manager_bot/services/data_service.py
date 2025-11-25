@@ -568,8 +568,10 @@ def get_user_name_from_records(record_id: str) -> Optional[str]:
     with open(users_records_file_path, "r", encoding="utf-8") as f:
         records = json.load(f)
     if record_id in records:
-        name = records[record_id]["first_name"] + " " + records[record_id]["last_name"]
-        if name and name != "":
+        first_name = records[record_id].get("first_name") or ""
+        last_name = records[record_id].get("last_name") or ""
+        name = f"{first_name} {last_name}".strip()
+        if name:
             logger.debug(f"get_user_name_from_records: 'name' found for 'bot_user_id': {record_id} in {users_records_file_path}")
             return name
         else:

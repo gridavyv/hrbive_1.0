@@ -1,4 +1,4 @@
-# TAGS: [admin], [user_related], [vacancy_related], [resume_related], [recommendation_related]
+# TAGS: [support], [user_related], [vacancy_related], [resume_related], [recommendation_related]
 
 from ast import Pass
 import asyncio
@@ -121,8 +121,6 @@ from task_queue import TaskQueue
 
 from services.status_validation_service import is_vacany_data_enough_for_resume_analysis
 
-from admin import send_message_to_admin
-
 
 from services.constants import *
 
@@ -134,6 +132,39 @@ USER_AGENT = os.getenv("USER_AGENT")
 
 # Global task queue for AI analysis tasks
 ai_task_queue = TaskQueue(maxsize=500)
+
+
+#############################################
+# ------------ SUPPORT FUNCTIONS ------------
+#############################################
+
+
+async def send_message_to_admin(application: Application, text: str, parse_mode: Optional[ParseMode] = None) -> None:
+    #TAGS: [support]
+
+    logger.info(f"send_message_to_admin: started.")
+
+    # ----- GET ADMIN ID from environment variables -----
+    
+    admin_id = os.getenv("ADMIN_ID", "")
+    if not admin_id:
+        logger.error("send_message_to_admin:ADMIN_ID environment variable is not set. Cannot send admin notification.")
+        return
+    
+    # ----- SEND NOTIFICATION to admin -----
+    
+    try:
+        if application and application.bot:
+            await application.bot.send_message(
+                chat_id=int(admin_id),
+                text=text,
+                parse_mode=parse_mode
+            )
+            logger.debug(f"send_message_to_admin: Admin notification sent successfully to admin_id: {admin_id}")
+        else:
+            logger.warning("send_message_to_admin: Cannot send admin notification: application or bot instance not available")
+    except Exception as e:
+        logger.error(f"send_message_to_admin: Failed to send admin notification: {e}", exc_info=True)
 
 
 ########################################################################################
@@ -991,10 +1022,10 @@ async def inform_admin_about_user_readiness(bot_user_id: str, application: Appli
         if not admin_id:
             raise ValueError("inform_admin_about_user_readiness: ADMIN_ID environment variable is not set. Cannot send admin notification.")
 
-        user_name = get_user_name_from_records(record_id=bot_user_id)
-        user_vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
-        user_status_dict = user_status(bot_user_id)
-        user_status_text = build_user_status_text(bot_user_id=bot_user_id, status_dict=user_status_dict)
+        user_name = get_user_name_from_records(record_id=bot_user_id) or "N/A"
+        user_vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id) or "N/A"
+        user_status_dict = await user_status(bot_user_id)
+        user_status_text = await build_user_status_text(bot_user_id=bot_user_id, status_dict=user_status_dict)
         
         user_message = (
             f"✅ User {bot_user_id} ready for analysis.\n"

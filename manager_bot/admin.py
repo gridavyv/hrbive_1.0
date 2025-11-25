@@ -30,10 +30,8 @@ from services.constants import (
     FAIL_TECHNICAL_SUPPORT_TEXT,
 )
 
-# Import admin-triggered functions from manager_bot
-# These are imported here to avoid circular imports - admin.py is imported by main.py,
-# not by manager_bot.py, so this is safe
 from manager_bot import (
+    send_message_to_admin,
     inform_admin_about_user_readiness,
     define_sourcing_criterias_triggered_by_admin_command,
     send_to_user_sourcing_criterias_triggered_by_admin_command,
@@ -44,38 +42,9 @@ from manager_bot import (
     recommend_resumes_triggered_by_admin_command,
 )
 
-
 ##########################################
 # ------------ ADMIN COMMANDS ------------
 ##########################################
-
-
-async def send_message_to_admin(application: Application, text: str, parse_mode: Optional[ParseMode] = None) -> None:
-    #TAGS: [admin]
-
-    logger.info(f"send_message_to_admin: started.")
-
-    # ----- GET ADMIN ID from environment variables -----
-    
-    admin_id = os.getenv("ADMIN_ID", "")
-    if not admin_id:
-        logger.error("send_message_to_admin:ADMIN_ID environment variable is not set. Cannot send admin notification.")
-        return
-    
-    # ----- SEND NOTIFICATION to admin -----
-    
-    try:
-        if application and application.bot:
-            await application.bot.send_message(
-                chat_id=int(admin_id),
-                text=text,
-                parse_mode=parse_mode
-            )
-            logger.debug(f"send_message_to_admin: Admin notification sent successfully to admin_id: {admin_id}")
-        else:
-            logger.warning("send_message_to_admin: Cannot send admin notification: application or bot instance not available")
-    except Exception as e:
-        logger.error(f"send_message_to_admin: Failed to send admin notification: {e}", exc_info=True)
 
 
 async def admin_get_managers_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

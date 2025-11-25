@@ -1,0 +1,15 @@
+2025-11-25 16:49:32,128 [INFO] hrvibe_orchestrator: Orchestrator logging configured. Logs written to: /Users/gridavyv/HRVibe/hrbive_1.0/users_data/logs/orchestrator_logs/orchestrator_20251125_164932.log
+2025-11-25 16:49:32,128 [INFO] hrvibe_orchestrator: Orchestrator starting...
+2025-11-25 16:49:32,128 [INFO] hrvibe_orchestrator: Project root: /Users/gridavyv/HRVibe/hrbive_1.0
+2025-11-25 16:49:32,128 [INFO] hrvibe_orchestrator: USERS_DATA_DIR = /Users/gridavyv/HRVibe/hrbive_1.0/users_data (created/verified)
+2025-11-25 16:49:32,129 [INFO] hrvibe_orchestrator: Starting manager bot in /Users/gridavyv/HRVibe/hrbive_1.0/manager_bot
+2025-11-25 16:49:32,130 [INFO] hrvibe_orchestrator: manager bot started with PID 25363
+2025-11-25 16:49:33,135 [INFO] hrvibe_orchestrator: Starting applicant bot in /Users/gridavyv/HRVibe/hrbive_1.0/applicant_bot
+2025-11-25 16:49:33,136 [INFO] hrvibe_orchestrator: applicant bot started with PID 25377
+2025-11-25 16:49:33,136 [INFO] hrvibe_orchestrator: Both bots started successfully
+2025-11-25 16:49:33,136 [INFO] hrvibe_orchestrator: Monitoring bot processes...
+2025-11-25 16:49:33,137 [ERROR] hrvibe_orchestrator: One of the bots exited: manager=1, applicant=None
+2025-11-25 16:49:33,137 [INFO] hrvibe_orchestrator: Shutting down child processes (reason: main-exit)...
+2025-11-25 16:49:33,637 [INFO] hrvibe_orchestrator: Process PID 25377 exited with code -15
+2025-11-25 16:49:33,638 [INFO] hrvibe_orchestrator: Shutdown completed
+2025-11-25 16:49:33,638 [INFO] hrvibe_orchestrator: Orchestrator exiting

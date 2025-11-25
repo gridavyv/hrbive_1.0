@@ -1,0 +1,231 @@
+{
+  "id": "127940541",
+  "premium": false,
+  "billing_type": {
+    "id": "standard",
+    "name": "Стандарт"
+  },
+  "can_upgrade_billing_type": true,
+  "relations": [],
+  "name": "Менеджер по продажам логистических услуг",
+  "insider_interview": null,
+  "response_letter_required": false,
+  "area": {
+    "id": "1",
+    "name": "Москва",
+    "url": "https://api.hh.ru/areas/1"
+  },
+  "salary": {
+    "from": 200000,
+    "to": 300000,
+    "currency": "RUR",
+    "gross": true
+  },
+  "salary_range": {
+    "from": 200000,
+    "to": 300000,
+    "currency": "RUR",
+    "gross": true,
+    "mode": {
+      "id": "MONTH",
+      "name": "За месяц"
+    },
+    "frequency": {
+      "id": "TWICE_PER_MONTH",
+      "name": "Два раза в месяц"
+    }
+  },
+  "type": {
+    "id": "open",
+    "name": "Открытая"
+  },
+  "address": {
+    "city": "Москва",
+    "street": "Каширское шоссе",
+    "building": "3к2с6",
+    "lat": 55.6729,
+    "lng": 37.633455,
+    "description": null,
+    "raw": "Москва, Каширское шоссе, 3к2с6",
+    "metro": {
+      "station_name": "Верхние Котлы",
+      "line_name": "МЦК",
+      "station_id": "95.532",
+      "line_id": "95",
+      "lat": 55.69,
+      "lng": 37.618889
+    },
+    "metro_stations": [
+      {
+        "station_name": "Верхние Котлы",
+        "line_name": "МЦК",
+        "station_id": "95.532",
+        "line_id": "95",
+        "lat": 55.69,
+        "lng": 37.618889
+      },
+      {
+        "station_name": "Коломенская",
+        "line_name": "Замоскворецкая",
+        "station_id": "2.53",
+        "line_id": "2",
+        "lat": 55.677423,
+        "lng": 37.663719
+      },
+      {
+        "station_name": "Нагатинская",
+        "line_name": "Серпуховско-Тимирязевская",
+        "station_id": "9.85",
+        "line_id": "9",
+        "lat": 55.682099,
+        "lng": 37.620917
+      },
+      {
+        "station_name": "Нагорная",
+        "line_name": "Серпуховско-Тимирязевская",
+        "station_id": "9.86",
+        "line_id": "9",
+        "lat": 55.672962,
+        "lng": 37.610397
+      }
+    ],
+    "id": "20410035",
+    "show_metro_only": false
+  },
+  "allow_messages": true,
+  "experience": {
+    "id": "between1And3",
+    "name": "От 1 года до 3 лет"
+  },
+  "schedule": {
+    "id": "fullDay",
+    "name": "Полный день"
+  },
+  "employment": {
+    "id": "full",
+    "name": "Полная занятость"
+  },
+  "department": null,
+  "show_contacts": false,
+  "contacts": null,
+  "description": "<p>Наша компания занимается организацией грузоперевозок и комплексным сопровождением (импорт, экспорт, внутрироссийские перевозки, складские и сопутствующие услуги). Усиливаем команду продаж и ищем менеджера, который умеет не просто «продать рейс», а выстраивать долгосрочные отношения с клиентами и сопровождать сделку от первого контакта до стабильных повторных заказов.</p> <p><strong>Обязанности:</strong></p> <ul> <li> <p>Работа с клиентами из теплой базы (B2B-сегмент: производственные компании, дистрибьюторы, импортёры/экспортёры и др.).</p> </li> <li> <p>Активный поиск и привлечение новых клиентов</p> </li> <li> <p>Продажа услуг перевозки и комплексных логистических решений (импорт/экспорт, мультимодальные перевозки, автоперевозки, ж/д, авиа, морские, при наличии в портфеле компании).</p> </li> <li> <p>Проведение переговоров: первичный контакт, выявление потребностей, презентация услуг, работа с возражениями.</p> </li> <li> <p>Заключение договоров и сопровождение клиента на всех этапах сделки.</p> </li> <li> <p>Ведение и развитие собственной клиентской базы, поддержание информации в CRM/учётных системах в актуальном состоянии.</p> </li> <li> <p>Формирование долгосрочных партнёрских отношений: повышение лояльности, выявление дополнительных потребностей, развитие оборота по каждому клиенту.</p> </li> </ul> <p><strong>Требования:</strong></p> <ul> <li> <p>Харизма и чувство юмора</p> </li> <li> <p>Опыт работы в продажах от 1 года (в логистике, ВЭД, транспортных услугах или близких B2B-сферах будет плюсом).</p> </li> <li> <p>Понимание цикла B2B-продаж и уверенные навыки переговоров.</p> </li> <li> <p>Нацеленность на результат.</p> </li> <li> <p>Умение самостоятельно планировать свой день и воронку продаж.</p> </li> <li> <p>Клиентоориентированность: важен не только «быстрый контракт», но и долгосрочные отношения.</p> </li> </ul> <p><strong>Условия:</strong></p> <ul> <li> <p>Прозрачная система вознаграждения: <strong>фиксированный оклад + % с продаж + бонусы по KPI</strong>, без «потолка» по доходу.</p> </li> <li> <p>Офис в Москве, возможность <strong>частично работать удаленно</strong>;</p> </li> <li> <p>Поддержка со стороны руководителя и операционной команды: помощь в расчётах, подборе оптимальных решений для клиента.</p> </li> <li> <p>Корпоративное обучение по продукту и особенностям логистики (при необходимости).</p> </li> <li> <p>Дружелюбная рабочая атмосфера, открытость к идеям и инициативам.</p> </li> <li> <p>Оформление по ТК.</p> </li> </ul>",
+  "branded_description": null,
+  "vacancy_constructor_template": null,
+  "key_skills": [
+    {
+      "name": "B2B Продажи"
+    },
+    {
+      "name": "Ведение переговоров"
+    },
+    {
+      "name": "Работа с возражениями"
+    },
+    {
+      "name": "Поиск и привлечение клиентов"
+    },
+    {
+      "name": "Заключение договоров"
+    }
+  ],
+  "auto_response": {
+    "accept_auto_response": true
+  },
+  "accept_handicapped": false,
+  "accept_kids": false,
+  "age_restriction": null,
+  "archived": false,
+  "response_url": null,
+  "specializations": [],
+  "professional_roles": [
+    {
+      "id": "70",
+      "name": "Менеджер по продажам, менеджер по работе с клиентами"
+    }
+  ],
+  "code": null,
+  "hidden": false,
+  "quick_responses_allowed": false,
+  "branded_template": null,
+  "driver_license_types": [],
+  "accept_incomplete_resumes": false,
+  "employer": {
+    "id": "12426224",
+    "name": "Да-Экспресс",
+    "url": "https://api.hh.ru/employers/12426224",
+    "alternate_url": "https://hh.ru/employer/12426224",
+    "logo_urls": null,
+    "vacancies_url": "https://api.hh.ru/vacancies?employer_id=12426224",
+    "country_id": 1,
+    "accredited_it_employer": false,
+    "trusted": false
+  },
+  "published_at": "2025-11-21T10:20:27+0300",
+  "created_at": "2025-11-21T10:20:27+0300",
+  "initial_created_at": "2025-11-21T10:20:27+0300",
+  "negotiations_url": null,
+  "suitable_resumes_url": null,
+  "apply_alternate_url": "https://hh.ru/applicant/vacancy_response?vacancyId=127940541",
+  "has_test": false,
+  "test": null,
+  "alternate_url": "https://hh.ru/vacancy/127940541",
+  "counters": {
+    "responses": 70,
+    "views": 249,
+    "invitations": 0,
+    "unread_responses": 47,
+    "resumes_in_progress": 20,
+    "invitations_and_responses": 70
+  },
+  "expires_at": "2025-12-21T10:20:27+0300",
+  "manager": {
+    "id": "15963620"
+  },
+  "response_notifications": false,
+  "working_days": [],
+  "working_time_intervals": [],
+  "working_time_modes": [],
+  "accept_temporary": false,
+  "languages": [],
+  "approved": true,
+  "employment_form": {
+    "id": "FULL",
+    "name": "Полная"
+  },
+  "fly_in_fly_out_duration": [],
+  "internship": false,
+  "night_shifts": false,
+  "work_format": [
+    {
+      "id": "HYBRID",
+      "name": "Гибрид"
+    }
+  ],
+  "work_schedule_by_days": [
+    {
+      "id": "FIVE_ON_TWO_OFF",
+      "name": "5/2"
+    }
+  ],
+  "working_hours": [
+    {
+      "id": "HOURS_8",
+      "name": "8 часов"
+    }
+  ],
+  "closed_for_applicants": false,
+  "previous_id": null,
+  "vacancy_properties": {
+    "appearance": {
+      "title": "Стандарт"
+    },
+    "properties": [
+      {
+        "property_type": "HH_STANDARD",
+        "parameters": [],
+        "end_time": "2025-12-21T10:20:27.059+03:00",
+        "start_time": "2025-11-21T10:20:27.059+03:00"
+      }
+    ]
+  }
+}
