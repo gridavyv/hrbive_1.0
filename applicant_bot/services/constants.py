@@ -55,6 +55,7 @@ PRIVACY_POLICY_CONFIRMATION_TEXT_APPLICANT = (
     f"- подтвердите <a href=\"{PRIVACY_POLICY_PROCESSING_CONFIRMATION_LINK_APPLICANT}\">согласие на обработку персональных данных и видео</a>\n"
 )
 
+CONTINUE_WITH_MENU_TEXT = "Для продолжения работы нажмите на кнопку 'Главное меню'."
 
 
 # ----- USER MESSAGES CONSTANTS with SUCCESS status-----

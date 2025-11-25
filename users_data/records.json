@@ -1,0 +1,120 @@
+{
+  "7853115214": {
+    "id": "7853115214",
+    "username": "grigory_product",
+    "first_name": "Grigory",
+    "last_name": "Davydov",
+    "first_time_seen": "2025-11-21T07:42:40.213790+00:00",
+    "privacy_policy_confirmed": "no",
+    "privacy_policy_confirmation_time": "2025-11-21T07:42:42.702951+00:00",
+    "access_token_recieved": "no",
+    "access_token": "",
+    "access_token_expires_at": "",
+    "data_from_hh": {},
+    "vacancy_selected": "no",
+    "vacancy_id": "",
+    "vacancy_name": "",
+    "vacancy_video_record_agreed": "no",
+    "vacancy_video_sending_confirmed": "no",
+    "vacancy_video_received": "no",
+    "vacancy_video_path": "",
+    "vacancy_description_recieved": "no",
+    "vacancy_sourcing_criterias_recieved": "no",
+    "vacancy_negotiation_collection_recieved": "no",
+    "messages_with_keyboards": []
+  },
+  "8481838168": {
+    "id": "8481838168",
+    "username": "da_express_moscow",
+    "first_name": "Da-express",
+    "last_name": null,
+    "first_time_seen": "2025-11-21T08:19:23.306152+00:00",
+    "privacy_policy_confirmed": "yes",
+    "privacy_policy_confirmation_time": "2025-11-21T08:19:27.125370+00:00",
+    "access_token_recieved": "yes",
+    "access_token": "USERO8CPP6RTOLGSC9QCB6PFGD8GO6PFDNQ0D44V8GBA8T10N7T215DOQCLF064O",
+    "access_token_expires_at": 1764923624,
+    "data_from_hh": {
+      "auth_type": "employer",
+      "id": "184722015",
+      "email": "da.express.moscow@gmail.com",
+      "first_name": "Марина",
+      "middle_name": null,
+      "last_name": "Кузнецова",
+      "manager": {
+        "id": "15963620",
+        "is_main_contact_person": true,
+        "has_admin_rights": true,
+        "manager_settings_url": "https://api.hh.ru/employers/12426224/managers/15963620/settings",
+        "has_multiple_manager_accounts": false
+      },
+      "employer": {
+        "id": "12426224",
+        "name": "Да-Экспресс",
+        "creation_time": "2025-11-07T15:44:55+0300",
+        "manager_id": "15963620"
+      },
+      "phone": null
+    },
+    "vacancy_selected": "yes",
+    "vacancy_id": "127940541",
+    "vacancy_name": "Менеджер по продажам логистических услуг",
+    "vacancy_video_record_agreed": "yes",
+    "vacancy_video_sending_confirmed": "yes",
+    "vacancy_video_received": "yes",
+    "vacancy_video_path": "/users_data/bot_user_id_8481838168/vacancy_id_127940541/video_from_managers/manager_8481838168_vacancy_127940541_time_20251121_090623_note.mp4",
+    "vacancy_description_recieved": "yes",
+    "vacancy_sourcing_criterias_recieved": "yes",
+    "vacancy_negotiation_collection_recieved": "no",
+    "messages_with_keyboards": []
+  },
+  "163063219": {
+    "id": "163063219",
+    "username": "tirlim_bombom",
+    "first_name": "Ekaterina",
+    "last_name": "Dmitrievna",
+    "first_time_seen": "2025-11-25T08:17:41.760188+00:00",
+    "privacy_policy_confirmed": "yes",
+    "privacy_policy_confirmation_time": "2025-11-25T08:17:51.571460+00:00",
+    "access_token_recieved": "yes",
+    "access_token": "USERLLQ68R32NR9BP5ELSOAIG1SLLI5LAAJDOTEL9OBCTOO0GG76USN3L1IL21TP",
+    "access_token_expires_at": 1765268613,
+    "data_from_hh": {
+      "auth_type": "employer",
+      "id": "163357719",
+      "email": "hr@revolmod.ru",
+      "first_name": "Ксения",
+      "middle_name": null,
+      "last_name": "Ковалёва",
+      "manager": {
+        "id": "13604725",
+        "is_main_contact_person": true,
+        "has_admin_rights": true,
+        "manager_settings_url": "https://api.hh.ru/employers/10846653/managers/13604725/settings",
+        "has_multiple_manager_accounts": false
+      },
+      "employer": {
+        "id": "10846653",
+        "name": "Револмод",
+        "creation_time": "2024-03-03T11:59:15+0300",
+        "manager_id": "13604725"
+      },
+      "phone": null
+    },
+    "vacancy_selected": "yes",
+    "vacancy_id": "127706750",
+    "vacancy_name": "Менеджер по продажам B2B",
+    "vacancy_video_record_agreed": "no",
+    "vacancy_video_sending_confirmed": "no",
+    "vacancy_video_received": "no",
+    "vacancy_video_path": "",
+    "vacancy_description_recieved": "no",
+    "vacancy_sourcing_criterias_recieved": "no",
+    "messages_with_keyboards": [
+      [
+        163063219,
+        1564
+      ]
+    ]
+  }
+}

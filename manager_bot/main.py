@@ -7,6 +7,9 @@ from manager_bot import (
     create_manager_application, 
     ai_task_queue, 
     start_command, 
+)
+
+from admin import (
     admin_get_users_command,
     admin_update_negotiations_command,
     admin_get_fresh_resumes_command,
@@ -75,9 +78,9 @@ async def run_manager_bot() -> None:
 
     # ------------- SETUP OF THE APPLICATION -------------
 
-    manager_token = os.getenv("TELEGRAM_MANAGER_BOT_TOKEN")
+    manager_token = os.getenv("HRVIBE_MANAGER_BOT_TOKEN")
     if not manager_token:
-        raise RuntimeError("TELEGRAM_MANAGER_BOT_TOKEN not found in environment variables")
+        raise RuntimeError("HRVIBE_MANAGER_BOT_TOKEN not found in environment variables")
     application = create_manager_application(manager_token)
     application.add_handler(CommandHandler("start", _show_bottom_menu_on_start), group=-1)
     application.add_handler(CommandHandler("admin_get_managers", admin_get_users_command))

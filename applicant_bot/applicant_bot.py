@@ -193,6 +193,8 @@ async def ask_privacy_policy_confirmation_command(update: Update, context: Conte
 
     if is_applicant_privacy_policy_confirmed(applicant_record_id=applicant_user_id):
         await send_message_to_user(update, context, text=SUCCESS_TO_GET_PRIVACY_POLICY_CONFIRMATION_TEXT)
+        await asyncio.sleep(1)
+        await send_message_to_user(update, context, text=CONTINUE_WITH_MENU_TEXT)
         return
 
     # Build options (which will be tuples of (button_text, callback_data))
@@ -264,7 +266,7 @@ async def handle_answer_policy_confirmation(update: Update, context: ContextType
 
         if privacy_policy_confirmation_user_decision == "yes":
             await send_message_to_user(update, context, text=SUCCESS_TO_GET_PRIVACY_POLICY_CONFIRMATION_TEXT)
-            
+
         # ----- SEND AUTHENTICATION REQUEST and wait for user to authorize -----
     
             # if already authorized, second authorization will be skipped

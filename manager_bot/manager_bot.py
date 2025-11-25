@@ -200,6 +200,53 @@ async def admin_get_users_command(update: Update, context: ContextTypes.DEFAULT_
             )
 
 
+async def admin_get_user_status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    #TAGS: [admin]
+    """
+    Admin command to analyze sourcing criterias for all users or a specific user.
+    Usage: /admin_analyze_sourcing_criterais [user_id]
+    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    """
+
+    try:
+        # ----- IDENTIFY USER and pull required data from records -----
+
+        bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
+        logger.info(f"admin_get_user_status_command: started. User_id: {bot_user_id}")
+
+        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+
+        admin_id = os.getenv("ADMIN_ID", "")
+        if not admin_id or bot_user_id != admin_id:
+            await send_message_to_user(update, context, text=FAIL_TO_IDENTIFY_USER_AS_ADMIN_TEXT)
+            logger.error(f"Unauthorized for {bot_user_id}")
+            return
+
+        # ----- PARSE COMMAND ARGUMENTS -----
+
+        target_user_id = None
+        if context.args and len(context.args) == 1:
+            target_user_id = context.args[0]
+            if target_user_id:
+                if is_user_in_records(record_id=target_user_id):
+                    await inform_admin_about_user_readiness(bot_user_id=target_user_id, application=context.application)
+                else:
+                    raise ValueError(f"User {target_user_id} not found in records.")
+            else:
+                raise ValueError(f"Invalid command arguments.")
+        else:
+            raise ValueError(f"Invalid number of arguments.")
+    
+    except Exception as e:
+        logger.error(f"admin_get_user_status_command: Failed to execute command: {e}", exc_info=True)
+        # Send notification to admin about the error
+        if context.application:
+            await send_message_to_admin(
+                application=context.application,
+                text=f"⚠️ Error admin_get_user_status_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
+            )
+
+
 async def admin_anazlyze_sourcing_criterais_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
@@ -237,9 +284,9 @@ async def admin_anazlyze_sourcing_criterais_command(update: Update, context: Con
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
-                raise ValueError(f"Invalid command arguments. Usage: /admin_analyze_criterias <user_id>")
+                raise ValueError(f"Invalid command arguments.")
         else:
-            raise ValueError(f"Invalid number of arguments. Usage: /admin_analyze_criterias <user_id>")
+            raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
         logger.error(f"admin_anazlyze_sourcing_criterais_command: Failed to execute command: {e}", exc_info=True)
@@ -289,9 +336,9 @@ async def admin_send_sourcing_criterais_to_user_command(update: Update, context:
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
-                raise ValueError(f"Invalid command arguments. Usage: /admin_send_criterias_to_user <user_id>")
+                raise ValueError(f"Invalid command arguments.")
         else:
-            raise ValueError(f"Invalid number of arguments. Usage: /admin_send_criterias_to_user <user_id>")
+            raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
         logger.error(f"admin_send_sourcing_criterais_to_user_command: Failed: {e}", exc_info=True)
@@ -340,9 +387,9 @@ async def admin_update_negotiations_command(update: Update, context: ContextType
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
-                raise ValueError(f"Invalid command arguments. Usage: /admin_update_neg_coll <user_id>")
+                raise ValueError(f"Invalid command arguments.")
         else:
-            raise ValueError(f"Invalid number of arguments. Usage: /admin_update_neg_coll <user_id>")
+            raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
         logger.error(f"admin_update_negotiations_command: Failed to execute command: {e}", exc_info=True)
@@ -390,9 +437,9 @@ async def admin_get_fresh_resumes_command(update: Update, context: ContextTypes.
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
-                raise ValueError(f"Invalid command arguments. Usage: /admin_get_fresh_resumes <user_id>")
+                raise ValueError(f"Invalid command arguments.")
         else:
-            raise ValueError(f"Invalid number of arguments. Usage: /admin_get_fresh_resumes <user_id>")
+            raise ValueError(f"Invalid number of arguments.")
 
     except Exception as e:
         logger.error(f"admin_get_fresh_resumes_command: Failed to execute command: {e}", exc_info=True)
@@ -441,9 +488,9 @@ async def admin_anazlyze_resumes_command(update: Update, context: ContextTypes.D
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
-                raise ValueError(f"Invalid command arguments. Usage: /admin_analyze_resumes <user_id>")
+                raise ValueError(f"Invalid command arguments.")
         else:
-            raise ValueError(f"Invalid number of arguments. Usage: /admin_analyze_resumes <user_id>")
+            raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
         logger.error(f"admin_anazlyze_resumes_command: Failed to execute command: {e}", exc_info=True)
@@ -492,9 +539,9 @@ async def admin_update_resume_records_with_applicants_video_status_command(updat
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
-                raise ValueError(f"Invalid command arguments. Usage: /admin_update_resume_records_with_applicants_video_status_for_all <user_id>")
+                raise ValueError(f"Invalid command arguments.")
         else:
-            raise ValueError(f"Invalid number of arguments. Usage: /admin_update_resume_records_with_applicants_video_status_for_all <user_id>")
+            raise ValueError(f"Invalid number of arguments.")
 
     
     except Exception as e:
@@ -543,9 +590,9 @@ async def admin_recommend_resumes_command(update: Update, context: ContextTypes.
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
-                raise ValueError(f"Invalid command arguments. Usage: /admin_recommend <user_id>")
+                raise ValueError(f"Invalid command arguments.")
         else:
-            raise ValueError(f"Invalid number of arguments. Usage: /admin_recommend <user_id>")
+            raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
         logger.error(f"admin_recommend_resumes_command: Failed to execute command: {e}", exc_info=True)
@@ -583,12 +630,7 @@ async def admin_send_message_command(update: Update, context: ContextTypes.DEFAU
         # ----- PARSE COMMAND ARGUMENTS -----
 
         if not context.args or len(context.args) < 2:
-            await send_message_to_user(
-                update, 
-                context, 
-                text="⚠️ Неверный формат команды.\nИспользование: /admin_send_message <user_id> <текст_сообщения>"
-            )
-            return
+            raise ValueError(f"Invalid number of arguments.")
         
         target_user_id = context.args[0]
         message_text = " ".join(context.args[1:])  # Join all remaining arguments as message text
@@ -598,8 +640,7 @@ async def admin_send_message_command(update: Update, context: ContextTypes.DEFAU
         try:
             target_user_id_int = int(target_user_id)
         except ValueError:
-            await send_message_to_user(update, context, text=f"❌ Неверный формат user_id: {target_user_id}")
-            return
+            raise ValueError(f"Invalid command arguments.")
 
         # ----- SEND MESSAGE TO USER -----
 
@@ -656,8 +697,7 @@ async def admin_pull_file_command(update: Update, context: ContextTypes.DEFAULT_
         # ----- PARSE COMMAND ARGUMENTS -----
 
         if not context.args or len(context.args) != 1:
-            invalid_args_text = "Invalid arguments.\nValid: /admin_pull_file <file_relative_path>"
-            raise ValueError(invalid_args_text)
+            raise ValueError(f"Invalid number of arguments.")
         
         file_relative_path = context.args[0]
 
@@ -704,6 +744,7 @@ async def admin_pull_file_command(update: Update, context: ContextTypes.DEFAULT_
                 application=context.application,
                 text=f"⚠️ Error admin_pull_file_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
+
 
 
 ########################################################################################
@@ -757,10 +798,10 @@ async def setup_new_user_command(update: Update, context: ContextTypes.DEFAULT_T
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"setup_new_user_command started. user_id: {bot_user_id}")
 
+        # ----- VALIDATION -----
+
         if bot_user_id is None:
             raise ValueError(f"setup_new_user_command: bot_user_id is None")
-
-        # ----- CHECK IF USER is in records and CREATE record and user directory if needed -----
 
         if not is_user_in_records(record_id=bot_user_id):
             create_record_for_new_user_in_records(record_id=bot_user_id)
@@ -807,15 +848,19 @@ async def ask_privacy_policy_confirmation_command(update: Update, context: Conte
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"ask_privacy_policy_confirmation_command started. user_id: {bot_user_id}")
 
+        # ----- VALIDATION -----
+
         if not is_user_in_records(record_id=bot_user_id):
             await send_message_to_user(update, context, text=FAIL_TO_FIND_USER_IN_RECORDS_TEXT)
             raise ValueError(f"ask_privacy_policy_confirmation_command: user {bot_user_id} not found in records")
 
-        # ----- CHECK IF PRIVACY POLICY is already confirmed and STOP if it is -----
-
         if is_manager_privacy_policy_confirmed(bot_user_id=bot_user_id):
             await send_message_to_user(update, context, text=SUCCESS_TO_GET_PRIVACY_POLICY_CONFIRMATION_TEXT)
+            await asyncio.sleep(1)
+            await send_message_to_user(update, context, text=CONTINUE_WITH_MENU_TEXT)
             return
+
+        # ----- ASK PRIVACY POLICY CONFIRMATION -----
 
         # Build options (which will be tuples of (button_text, callback_data))
         answer_options = [
@@ -897,6 +942,7 @@ async def handle_answer_policy_confirmation(update: Update, context: ContextType
 
         if privacy_policy_confirmation_user_decision == "yes":
             await send_message_to_user(update, context, text=SUCCESS_TO_GET_PRIVACY_POLICY_CONFIRMATION_TEXT)
+
             
         # ----- SEND AUTHENTICATION REQUEST and wait for user to authorize -----
     
@@ -907,6 +953,7 @@ async def handle_answer_policy_confirmation(update: Update, context: ContextType
         
         else:
             await send_message_to_user(update, context, text=MISSING_PRIVACY_POLICY_CONFIRMATION_TEXT)
+            return
 
 
 async def hh_authorization_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -926,13 +973,16 @@ async def hh_authorization_command(update: Update, context: ContextTypes.DEFAULT
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"hh_authorization_command started. user_id: {bot_user_id}")
         
-        # ----- CHECK IF NO Privacy policy consent or AUTHORIZAED already and STOP if it is -----
+        # ----- VALIDATION -----
+
         if not is_manager_privacy_policy_confirmed(bot_user_id=bot_user_id):
             await send_message_to_user(update, context, text=MISSING_PRIVACY_POLICY_CONFIRMATION_TEXT)
             return
 
         if is_user_authorized(record_id=bot_user_id):
             await send_message_to_user(update, context, text=SUCCESS_TO_HH_AUTHORIZATION_TEXT)
+            await asyncio.sleep(1)
+            await send_message_to_user(update, context, text=CONTINUE_WITH_MENU_TEXT)
             return
 
         # ------ HH.ru AUTHENTICATION PROCESS ------
@@ -976,12 +1026,16 @@ async def hh_authorization_command(update: Update, context: ContextTypes.DEFAULT
                         update_user_records_with_top_level_key(record_id=bot_user_id, key="access_token_expires_at", value=expires_at)
                         # If cannot update user records, ValueError is raised from method: update_user_records_with_top_level_key()
 
-                    logger.info(f"Authorization successful on attempt {attempt}. Access token '{access_token}' and expires_at '{expires_at}' updated in records.")
+                    logger.info(f"hh_authorization_command: authorization successful on attempt {attempt}. Access token '{access_token}' and expires_at '{expires_at}' updated in records.")
                     await send_message_to_user(update, context, text=AUTH_SUCCESS_TEXT)
 
         # ----- PULL USER DATA from HH and enrich records with it -----
 
-                    await pull_user_data_from_hh_command(update=update, context=context)
+                    try:
+                        await pull_user_data_from_hh_command(update=update, context=context)
+                    except Exception as e:
+                        logger.error(f"hh_authorization_command: Failed to pull user data from HH after successful authentication: {e}", exc_info=True)
+                        # Don't break authentication process if pulling user data fails
                     
                     #Stop the loop after successful authorization
                     break
@@ -1017,13 +1071,15 @@ async def pull_user_data_from_hh_command(update: Update, context: ContextTypes.D
         logger.info(f"pull_user_data_from_hh_command started. user_id: {bot_user_id}")
         access_token = get_access_token_from_records(bot_user_id=bot_user_id)
 
-        # ----- CHECK IF USER DATA is already in records and STOP if it is -----
+        # ----- VALIDATION -----
 
         # Check if user is already authorized, if not, pull user data from HH
         if is_hh_data_in_user_record(record_id=bot_user_id):
-            logger.debug(f"'bot_user_id': {bot_user_id} already has HH data in user record.")
-            return 
-            
+            raise ValueError(f"pull_user_data_from_hh_command: 'bot_user_id': {bot_user_id} already has HH data in user record.")
+        
+        if not is_user_authorized(record_id=bot_user_id):
+            raise ValueError(f"pull_user_data_from_hh_command: 'bot_user_id': {bot_user_id} is not authorized.")
+
         # ----- PULL USER DATA from HH and enrich records with it -----
 
         # Get user info from HH.ru API
@@ -1032,10 +1088,6 @@ async def pull_user_data_from_hh_command(update: Update, context: ContextTypes.D
         cleaned_hh_user_info = clean_user_info_received_from_hh(user_info=hh_user_info)
         # Update user info from HH.ru API in records
         update_user_records_with_top_level_key(record_id=bot_user_id, key="data_from_hh", value=cleaned_hh_user_info) # ValueError raised if fails
-
-        # ----- SELECT VACANCY -----
-
-        await select_vacancy_command(update=update, context=context)
     
     except Exception as e:
         logger.error(f"Failed to pull user data from HH: {e}", exc_info=True)
@@ -1045,6 +1097,13 @@ async def pull_user_data_from_hh_command(update: Update, context: ContextTypes.D
                 application=context.application,
                 text=f"⚠️ Error pull_user_data_from_hh_command: {e}\nUser ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
+        # Execute select_vacancy_command anyway even if pulling user data failed
+    finally:
+
+            # ----- SELECT VACANCY -----
+
+            await select_vacancy_command(update=update, context=context)
+        
 
 
 async def ask_to_record_video_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1187,11 +1246,7 @@ async def handle_answer_video_record_request(update: Update, context: ContextTyp
     # ----- IF USER CHOSE "NO" inform user about need to continue without video -----
 
     else:
-        await send_message_to_user(update, context, text=CONTINUE_WITHIOUT_WELCOME_VIDEO_TEXT)
-
-        # ----- READ VACANCY DESCRIPTION -----
-
-        await read_vacancy_description_command(update=update, context=context)
+        await send_message_to_user(update, context, text=FAIL_TO_RECORD_WELCOME_VIDEO_TEXT)
 
 
 async def ask_confirm_sending_video_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1319,7 +1374,7 @@ async def select_vacancy_command(update: Update, context: ContextTypes.DEFAULT_T
         logger.info(f"select_vacancy_command started. user_id: {bot_user_id}")
         access_token = get_access_token_from_records(bot_user_id=bot_user_id)
 
-        # ----- CHECK IF Privacy confirmed and VACANCY is selected and STOP if it is -----
+        # ----- VALIDATION -----
 
         if not is_manager_privacy_policy_confirmed(bot_user_id=bot_user_id):
             await send_message_to_user(update, context, text=MISSING_PRIVACY_POLICY_CONFIRMATION_TEXT)
@@ -1519,6 +1574,8 @@ async def read_vacancy_description_command(update: Update, context: ContextTypes
 
         create_json_file_with_dictionary_content(file_path=vacancy_description_file_path, content_to_write=vacancy_description)
         update_user_records_with_top_level_key(record_id=bot_user_id, key="vacancy_description_recieved", value="yes")
+
+        await inform_admin_about_user_readiness(bot_user_id=bot_user_id, application=context.application)
     
     except Exception as e:
         logger.error(f"Failed to read vacancy description: {e}", exc_info=True)
@@ -1530,6 +1587,40 @@ async def read_vacancy_description_command(update: Update, context: ContextTypes
                 text=f"⚠️ Error read_vacancy_description_command: {e}\nUser ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
 
+
+async def inform_admin_about_user_readiness(bot_user_id: str, application: Application) -> None:
+    #TAGS: [user_related]
+    """
+    Inform admin about user readiness.
+    Called from: 'read_vacancy_description_command'.
+    Triggers: nothing.
+    """
+
+    try:
+
+        admin_id = os.getenv("ADMIN_ID", "")
+        if not admin_id:
+            raise ValueError("inform_admin_about_user_readiness: ADMIN_ID environment variable is not set. Cannot send admin notification.")
+
+        user_status_dict = user_status(bot_user_id)
+        user_status_text = build_user_status_text(bot_user_id=bot_user_id, status_dict=user_status_dict)
+        
+        if application and application.bot:
+            await application.bot.send_message(
+                chat_id=int(admin_id),
+                text=f"✅ User {bot_user_id} ready for analysis.\n\n{user_status_text}",
+                parse_mode=ParseMode.MARKDOWN
+            )
+            logger.debug(f"inform_admin_about_user_readiness: User {bot_user_id} status text sent to admin: {user_status_text}")
+    except Exception as e:
+        logger.error(f"inform_admin_about_user_readiness: Failed to inform admin about user readiness: {e}", exc_info=True)
+        # Send notification to admin about the error
+        if application and application.bot:
+            await application.bot.send_message(
+                chat_id=int(admin_id),
+                text=f"⚠️ Error inform_admin_about_user_readiness: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}",
+                parse_mode=ParseMode.MARKDOWN
+            )
 
 ########################################################################################
 # ------------ COMMANDS EXECUTED on ADMIN request ------------
@@ -2297,7 +2388,6 @@ async def show_chat_menu_command(update: Update, context: ContextTypes.DEFAULT_T
         "vacancy_selection": "Выбрать вакансию",
         "welcome_video_recording": "Записать приветственное видео",
         "vacancy_description_recieved": "Запросить описание вакансии",
-        "sourcing_criterias_recieved": "Выработать критерии отбора",
     }
     answer_options = []
     for key, value_bool in status_dict.items():
@@ -2386,8 +2476,6 @@ async def handle_chat_menu_action(update: Update, context: ContextTypes.DEFAULT_
         await ask_to_record_video_command(update=update, context=context)
     elif action == "vacancy_description_recieved":
         await read_vacancy_description_command(update=update, context=context)
-    elif action == "sourcing_criterias_recieved":
-        await define_sourcing_criterias_command(update=update, context=context)
     else:
         logger.warning(f"Unknown action '{action}' from callback_code '{selected_callback_code}'. Available actions: bot_authorization, privacy_policy_confirmation, privacy_policy, hh_authorization, hh_auth, select_vacancy, record_video, get_recommendations")
         await send_message_to_user(update, context, text=FAIL_TECHNICAL_SUPPORT_TEXT)
