@@ -561,6 +561,24 @@ def get_list_of_users_from_records() -> list[str]:
     return list(records.keys())
 
 
+def get_user_name_from_records(record_id: str) -> Optional[str]:
+    # TAGS: [get_data]
+    """Get user name from users records."""
+    users_records_file_path = get_users_records_file_path()
+    with open(users_records_file_path, "r", encoding="utf-8") as f:
+        records = json.load(f)
+    if record_id in records:
+        name = records[record_id]["first_name"] + " " + records[record_id]["last_name"]
+        if name and name != "":
+            logger.debug(f"get_user_name_from_records: 'name' found for 'bot_user_id': {record_id} in {users_records_file_path}")
+            return name
+        else:
+            logger.debug(f"get_user_name_from_records: 'name' not found for 'bot_user_id': {record_id} in {users_records_file_path}")
+            return None
+    else:
+        logger.debug(f"get_user_name_from_records:'bot_user_id': {record_id} not found in {users_records_file_path}")
+        return None
+
 # ****** METHODS with TAGS: [update_data] ******
 
 def update_user_records_with_top_level_key(record_id: int | str, key: str, value: str | int | bool | dict | list) -> None:

@@ -53,6 +53,8 @@ from manager_bot import (
 async def send_message_to_admin(application: Application, text: str, parse_mode: Optional[ParseMode] = None) -> None:
     #TAGS: [admin]
 
+    logger.info(f"send_message_to_admin: started.")
+
     # ----- GET ADMIN ID from environment variables -----
     
     admin_id = os.getenv("ADMIN_ID", "")
@@ -76,20 +78,20 @@ async def send_message_to_admin(application: Application, text: str, parse_mode:
         logger.error(f"send_message_to_admin: Failed to send admin notification: {e}", exc_info=True)
 
 
-async def admin_get_users_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def admin_get_managers_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
-    Admin command to list all user IDs from user records.
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Admin command to list all user IDs from users records.
+    Usage: /admin_get_managers
     """
 
     try:
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        logger.info(f"admin_get_users_command: started. User_id: {bot_user_id}")
+        logger.info(f"admin_get_managers_command: started. User_id: {bot_user_id}")
         
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -104,29 +106,28 @@ async def admin_get_users_command(update: Update, context: ContextTypes.DEFAULT_
         await send_message_to_user(update, context, text=f"📋 List of users: {user_ids}")
     
     except Exception as e:
-        logger.error(f"admin_get_users_command: Failed to execute admin_get_list_of_users command: {e}", exc_info=True)        # Send notification to admin about the error
+        logger.error(f"admin_get_managers_command: Failed: {e}", exc_info=True)        # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
                 application=context.application,
-                text=f"⚠️ Error admin_get_users_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
+                text=f"⚠️ Error admin_get_managers_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
 
 
-async def admin_get_user_status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def admin_get_manager_status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
-    Admin command to analyze sourcing criterias for all users or a specific user.
-    Usage: /admin_analyze_sourcing_criterais [user_id]
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Admin command to get status of a specific user.
+    Usage: /admin_get_manager_status [user_id]
     """
 
     try:
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        logger.info(f"admin_get_user_status_command: started. User_id: {bot_user_id}")
+        logger.info(f"admin_get_manager_status_command: started. User_id: {bot_user_id}")
 
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -150,30 +151,29 @@ async def admin_get_user_status_command(update: Update, context: ContextTypes.DE
             raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
-        logger.error(f"admin_get_user_status_command: Failed to execute command: {e}", exc_info=True)
+        logger.error(f"admin_get_manager_status_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
                 application=context.application,
-                text=f"⚠️ Error admin_get_user_status_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
+                text=f"⚠️ Error admin_get_manager_status_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
 
 
-async def admin_anazlyze_sourcing_criterais_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def admin_analyze_sourcing_criterais_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
-    Admin command to analyze sourcing criterias for all users or a specific user.
-    Usage: /admin_analyze_sourcing_criterais [user_id]
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Admin command to analyze sourcing criterias for a specific user.
+    Usage: /admin_analyze_criterias [user_id]
     """
 
     try:
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        logger.info(f"admin_anazlyze_sourcing_criterais_command: started. User_id: {bot_user_id}")
+        logger.info(f"admin_analyze_sourcing_criterais_command: started. User_id: {bot_user_id}")
 
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -189,10 +189,13 @@ async def admin_anazlyze_sourcing_criterais_command(update: Update, context: Con
             if target_user_id:
                 if is_user_in_records(record_id=target_user_id):
                     if is_vacancy_description_recieved(record_id=target_user_id):
+
+                        # - TRIGGER TASK to analyze sourcing criterias -
+
                         await define_sourcing_criterias_triggered_by_admin_command(bot_user_id=target_user_id)
-                        await send_message_to_user(update, context, text=f"Taks for analysing sourcing criterias is in task_queue for user {target_user_id}.")
+                        await send_message_to_user(update, context, text=f"Task for analysing sourcing criterias completed for user {target_user_id}.")
                     else:
-                        raise ValueError(f"User {target_user_id} does not have vacancy description received.")
+                        raise ValueError(f"User {target_user_id} does not have vacancy description to analyze.")
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
@@ -201,12 +204,12 @@ async def admin_anazlyze_sourcing_criterais_command(update: Update, context: Con
             raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
-        logger.error(f"admin_anazlyze_sourcing_criterais_command: Failed to execute command: {e}", exc_info=True)
+        logger.error(f"admin_analyze_sourcing_criterais_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
                 application=context.application,
-                text=f"⚠️ Error admin_anazlyze_sourcing_criterais_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
+                text=f"⚠️ Error admin_analyze_sourcing_criterais_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
 
 
@@ -214,8 +217,7 @@ async def admin_send_sourcing_criterais_to_user_command(update: Update, context:
     #TAGS: [admin]
     """
     Admin command to send sourcing criterias to a specific user.
-    Usage: /admin_send_sourcing_criterais_to_user [user_id]
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Usage: /admin_send_criterias_to_user [user_id]
     """
 
     try:
@@ -224,7 +226,7 @@ async def admin_send_sourcing_criterais_to_user_command(update: Update, context:
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"admin_send_sourcing_criterais_to_user_command: started. User_id: {bot_user_id}")
 
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -241,10 +243,13 @@ async def admin_send_sourcing_criterais_to_user_command(update: Update, context:
                 if is_user_in_records(record_id=target_user_id):
                     logger.debug(f"User {target_user_id} found in records.")
                     if is_vacancy_sourcing_criterias_recieved(record_id=target_user_id):
+
+                        # - TRIGGER TASK to send sourcing criterias to user -
+
                         await send_to_user_sourcing_criterias_triggered_by_admin_command(bot_user_id=target_user_id, application=context.application)
                         await send_message_to_user(update, context, text=f"Sourcing criterias sent to user {target_user_id}.")
                     else:
-                        raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis.")
+                        raise ValueError(f"User {target_user_id} does not have sourcing criterias to send.")
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
@@ -265,9 +270,8 @@ async def admin_send_sourcing_criterais_to_user_command(update: Update, context:
 async def admin_update_negotiations_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
-    Admin command to update negotiations for all users or a specific user.
-    Usage: /admin_update_neg_coll_for_all [user_id]
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Admin command to update negotiations for a specific user.
+    Usage: /admin_update_neg_coll [user_id]
     """
 
     try:
@@ -276,7 +280,7 @@ async def admin_update_negotiations_command(update: Update, context: ContextType
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"admin_update_negotiations_command: started. User_id: {bot_user_id}")
 
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -292,10 +296,13 @@ async def admin_update_negotiations_command(update: Update, context: ContextType
             if target_user_id:
                 if is_user_in_records(record_id=target_user_id):
                     if is_vacancy_selected(record_id=target_user_id):
+
+                        # - TRIGGER TASK to update negotiations -
+
                         await source_negotiations_triggered_by_admin_command(bot_user_id=target_user_id) # ValueError raised if fails
                         await send_message_to_user(update, context, text=f"Negotiations collection updated for user {target_user_id}.")
                     else:
-                        raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis.")
+                        raise ValueError(f"User {target_user_id} did not select a vacancy.")
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
@@ -304,7 +311,7 @@ async def admin_update_negotiations_command(update: Update, context: ContextType
             raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
-        logger.error(f"admin_update_negotiations_command: Failed to execute command: {e}", exc_info=True)
+        logger.error(f"admin_update_negotiations_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
@@ -316,8 +323,8 @@ async def admin_update_negotiations_command(update: Update, context: ContextType
 async def admin_get_fresh_resumes_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
-    Admin command to get fresh resumes for all users.
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Admin command to get fresh resumes for a specific user.
+    Usage: /admin_get_fresh_resumes [user_id]
     """
 
     try:
@@ -326,7 +333,7 @@ async def admin_get_fresh_resumes_command(update: Update, context: ContextTypes.
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"admin_get_fresh_resumes_command: started. User_id: {bot_user_id}")
         
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -342,10 +349,13 @@ async def admin_get_fresh_resumes_command(update: Update, context: ContextTypes.
             if target_user_id:
                 if is_user_in_records(record_id=target_user_id):
                     if is_vacany_data_enough_for_resume_analysis(user_id=target_user_id):
+
+                        # - TRIGGER TASK to collect fresh resumes -
+
                         await source_resumes_triggered_by_admin_command(bot_user_id=target_user_id)
                         await send_message_to_user(update, context, text=f"Fresh resumes collected for user {target_user_id}.")
                     else:
-                        raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis.")
+                        raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis. Skipping collection of fresh resumes.")
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
@@ -354,7 +364,7 @@ async def admin_get_fresh_resumes_command(update: Update, context: ContextTypes.
             raise ValueError(f"Invalid number of arguments.")
 
     except Exception as e:
-        logger.error(f"admin_get_fresh_resumes_command: Failed to execute command: {e}", exc_info=True)
+        logger.error(f"admin_get_fresh_resumes_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
@@ -366,8 +376,8 @@ async def admin_get_fresh_resumes_command(update: Update, context: ContextTypes.
 async def admin_anazlyze_resumes_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
-    Admin command to analyze fresh resumes for all users.
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Admin command to analyze fresh resumes for a specific user.
+    Usage: /admin_analyze_resumes [user_id]
     """
 
     try:
@@ -376,7 +386,7 @@ async def admin_anazlyze_resumes_command(update: Update, context: ContextTypes.D
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"admin_anazlyze_resumes_command: started. User_id: {bot_user_id}")
         
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -392,9 +402,12 @@ async def admin_anazlyze_resumes_command(update: Update, context: ContextTypes.D
             if target_user_id:
                 if is_user_in_records(record_id=target_user_id):
                     if is_vacany_data_enough_for_resume_analysis(user_id=target_user_id):
+
+                        # - TRIGGER TASK to analyze fresh resumes -
+
                         await send_message_to_user(update, context, text=f"Start creating tasks for analysis of the fresh resumes for user {target_user_id}.")
                         await analyze_resume_triggered_by_admin_command(bot_user_id=target_user_id)
-                        await send_message_to_user(update, context, text=f"Analysis of fresh resumes is done for user {target_user_id}.")
+                        await send_message_to_user(update, context, text=f"Completed analysis of fresh resumes for user {target_user_id}.")
                     else:
                         raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis.")
                 else:
@@ -405,7 +418,7 @@ async def admin_anazlyze_resumes_command(update: Update, context: ContextTypes.D
             raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
-        logger.error(f"admin_anazlyze_resumes_command: Failed to execute command: {e}", exc_info=True)
+        logger.error(f"admin_anazlyze_resumes_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
@@ -417,8 +430,8 @@ async def admin_anazlyze_resumes_command(update: Update, context: ContextTypes.D
 async def admin_update_resume_records_with_applicants_video_status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
-    Admin command to update resume records with fresh videos from applicants for all users.
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Admin command to update resume records with fresh videos from applicants for a specific user.
+    Usage: /admin_update_videos [user_id]
     """
 
     try:
@@ -427,7 +440,7 @@ async def admin_update_resume_records_with_applicants_video_status_command(updat
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"admin_update_resume_records_with_applicants_video_status_command: started. User_id: {bot_user_id}")
 
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -442,12 +455,18 @@ async def admin_update_resume_records_with_applicants_video_status_command(updat
             target_user_id = context.args[0]
             if target_user_id:
                 if is_user_in_records(record_id=target_user_id):
-                    if is_vacany_data_enough_for_resume_analysis(user_id=target_user_id):
+                    if is_vacancy_selected(record_id=target_user_id):
                         target_user_vacancy_id = get_target_vacancy_id_from_records(record_id=target_user_id)
-                        await update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command(bot_user_id=target_user_id, vacancy_id=target_user_vacancy_id)
-                        await send_message_to_user(update, context, text=f"Resume records updated with fresh videos from applicants for user {target_user_id}.")
+                        if target_user_vacancy_id:
+
+                            # ----- TRIGGER TASK to update resume records with fresh videos from applicants -----
+
+                            await update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command(bot_user_id=target_user_id, vacancy_id=target_user_vacancy_id)
+                            await send_message_to_user(update, context, text=f"Resume records updated with fresh videos from applicants for user {target_user_id} / vacancy ID {target_user_vacancy_id}.")
+                        else:
+                            raise ValueError(f"Vacancy ID is {target_user_vacancy_id} for user {target_user_id}.")
                     else:
-                        raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis.")
+                        raise ValueError(f"User {target_user_id} did not select a vacancy.")
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
@@ -455,9 +474,8 @@ async def admin_update_resume_records_with_applicants_video_status_command(updat
         else:
             raise ValueError(f"Invalid number of arguments.")
 
-    
     except Exception as e:
-        logger.error(f"admin_update_resume_records_with_applicants_video_status_command: Failed to execute command: {e}", exc_info=True)
+        logger.error(f"admin_update_resume_records_with_applicants_video_status_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
@@ -470,7 +488,7 @@ async def admin_recommend_resumes_command(update: Update, context: ContextTypes.
     #TAGS: [admin]
     """
     Admin command to recommend applicants with video for all users.
-    Only accessible to users whose ID is in the ADMIN_IDS whitelist.
+    Usage: /admin_recommend [user_id]
     """
 
     try:
@@ -479,7 +497,7 @@ async def admin_recommend_resumes_command(update: Update, context: ContextTypes.
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"admin_recommend_resumes_command: started. User_id: {bot_user_id}")
         
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -495,10 +513,13 @@ async def admin_recommend_resumes_command(update: Update, context: ContextTypes.
             if target_user_id:
                 if is_user_in_records(record_id=target_user_id):
                     if is_vacany_data_enough_for_resume_analysis(user_id=target_user_id):
+
+                        # ----- TRIGGER TASK to recommend resumes -----
+
                         await recommend_resumes_triggered_by_admin_command(bot_user_id=target_user_id, application=context.application)
                         await send_message_to_user(update, context, text="Recommending resumes is triggered for user {target_user_id}.")
                     else:
-                        raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis.")
+                        raise ValueError(f"User {target_user_id} does not have enough vacancy data for resume analysis. Skipping recommendation of resumes.")
                 else:
                     raise ValueError(f"User {target_user_id} not found in records.")
             else:
@@ -507,7 +528,7 @@ async def admin_recommend_resumes_command(update: Update, context: ContextTypes.
             raise ValueError(f"Invalid number of arguments.")
     
     except Exception as e:
-        logger.error(f"admin_recommend_resumes_command: Failed to execute command: {e}", exc_info=True)
+        logger.error(f"admin_recommend_resumes_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
@@ -522,16 +543,15 @@ async def admin_send_message_command(update: Update, context: ContextTypes.DEFAU
     Admin command to send a message to a specific user by user_id (chat_id).
     Usage: /admin_send_message <user_id> <message_text>
     Usage example: /admin_send_message 7853115214 Привет! Как дела?
-    Sends notification to admin if fails
     """
     
     try:
         # ----- IDENTIFY USER and pull required data from records -----
 
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
-        logger.info(f"admin_send_message_command triggered by user_id: {bot_user_id}")
+        logger.info(f"admin_send_message_command: started. User_id: {bot_user_id}")
         
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -562,34 +582,32 @@ async def admin_send_message_command(update: Update, context: ContextTypes.DEFAU
                     chat_id=target_user_id_int,
                     text=message_text
                 )
-                await send_message_to_user(update, context, text=f"✅ Сообщение отправлено пользователю {target_user_id}:\n'{message_text}'")
-                logger.info(f"Admin {bot_user_id} sent message to user {target_user_id}: {message_text}")
+                await send_message_to_user(update, context, text=f"Message sent to user {target_user_id}:\n'{message_text}'")
+                logger.info(f"admin_send_message_command: Admin {bot_user_id} sent message to user {target_user_id}: {message_text}")
             except Exception as send_err:
-                error_msg = f"❌ Не удалось отправить сообщение пользователю {target_user_id}: {send_err}"
+                error_msg = f"Fail to send message to user {target_user_id}: {send_err}"
                 await send_message_to_user(update, context, text=error_msg)
-                logger.error(f"Failed to send message to user {target_user_id}: {send_err}", exc_info=True)
+                logger.error(f"admin_send_message_command: Failed to send message to user {target_user_id}: {send_err}", exc_info=True)
                 raise
         else:
             raise ValueError("Application or bot instance not available")
     
     except Exception as e:
-        logger.error(f"Failed to execute admin_send_message_to_user command: {e}", exc_info=True)
-        await send_message_to_user(update, context, text=FAIL_TECHNICAL_SUPPORT_TEXT)
+        logger.error(f"admin_send_message_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
                 application=context.application,
-                text=f"⚠️ Error executing admin_send_message_to_user command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
+                text=f"⚠️ Error admin_send_message_command: {e}\nAdmin ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
 
 
 async def admin_pull_file_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     #TAGS: [admin]
     """
-    Admin command to pull and send log files.
-    Usage: /admin_pull_file <file_relative_path>
+    Admin command to pull and send file back to user.
+    Usage: /admin_pull_file [file_relative_path]
     Usage example: /admin_pull_file logs/manager_bot_logs/1234432.log
-    Sends the log file as a document to the admin chat.
     """
     
     try:
@@ -598,7 +616,7 @@ async def admin_pull_file_command(update: Update, context: ContextTypes.DEFAULT_
         bot_user_id = str(get_tg_user_data_attribute_from_update_object(update=update, tg_user_attribute="id"))
         logger.info(f"admin_pull_file_command: started. User_id: {bot_user_id}")
         
-        #  ----- CHECK IF USER IS NOT AN ADMIN and STOP if it is -----
+        #  ----- VALIDATION -----
 
         admin_id = os.getenv("ADMIN_ID", "")
         if not admin_id or bot_user_id != admin_id:
@@ -649,7 +667,7 @@ async def admin_pull_file_command(update: Update, context: ContextTypes.DEFAULT_
         else:
             raise RuntimeError("Application or bot instance not available")
     except Exception as e:
-        logger.error(f"admin_pull_file_command: Failed to execute: {e}", exc_info=True)
+        logger.error(f"admin_pull_file_command: Failed: {e}", exc_info=True)
         # Send notification to admin about the error
         if context.application:
             await send_message_to_admin(
