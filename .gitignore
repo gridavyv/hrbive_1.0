@@ -4,3 +4,6 @@
 # Exclude JSON files
 *.json
 
+# Exclude log files
+*.log
+
