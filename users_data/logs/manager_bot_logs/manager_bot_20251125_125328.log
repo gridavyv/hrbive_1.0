@@ -1,5 +1,0 @@
-2025-11-25 12:53:28 - services.logging_service - INFO - Logging configured. Logs are written to: /Users/gridavyv/HRVibe/hrbive_1.0/users_data/logs/manager_bot_logs/manager_bot_20251125_125328.log
-2025-11-25 12:53:28 - services.logging_service - INFO - Log rotation: max size 20.0MB, keeping 20 backup files
-2025-11-25 12:53:28 - __main__ - INFO - Telegram Bot for Managers is running
-2025-11-25 12:53:28 - services.data_service - DEBUG - /Users/gridavyv/HRVibe/hrbive_1.0/users_data/records.json created.
-2025-11-25 12:53:28 - asyncio - DEBUG - Using selector: KqueueSelector
