@@ -1,0 +1,6 @@
+# Exclude video files
+*.mp4
+
+# Exclude JSON files
+*.json
+
