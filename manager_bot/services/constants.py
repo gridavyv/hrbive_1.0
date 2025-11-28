@@ -7,6 +7,8 @@ VACANCY_STATUS_TO_FILTER = "open"
 
 EMPLOYER_STATE_RESPONSE = "response"
 EMPLOYER_STATE_CONSIDER = "consider"
+EMPLOYER_STATE_DISCARD = "discard_by_employer"
+EMPLOYER_STATE_PHONE_INTERVIEW = "phone_interview"
 
 
 # ----- MENU BUTTONS CONSTANTS -----
@@ -86,7 +88,8 @@ PRIVACY_POLICY_CONFIRMATION_TEXT = (
 )
 
 APPLICANT_MESSAGE_TEXT_WITHOUT_LINK = "Здравствуйте. Мы очень заинтересовались вашим резюме. Чтобы ускорить процесс выхода на интервью, пройдите в телеграм бота и посмотрите приветственное видео менеджера:"
-
+APPLICANT_INTERVIEW_INVITATION_TEXT = "Работодатель готов пригласить вам на интервью. Свяжемся с вами по телефону в ближайшее время."
+APPLICANT_REJECTION_INTERVIEW_INVITATION_TEXT = "к сожалению, работодатель не готов пригласить вам на интервью."
 
 # ----- USER MESSAGES CONSTANTS with SUCCESS status-----
 

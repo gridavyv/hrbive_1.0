@@ -9,7 +9,12 @@ from telegram._passport.passportdata import PassportData
 
 from services.data_service import create_json_file_with_dictionary_content
 
-from services.constants import EMPLOYER_STATE_RESPONSE, EMPLOYER_STATE_CONSIDER
+from services.constants import (
+    EMPLOYER_STATE_RESPONSE, 
+    EMPLOYER_STATE_CONSIDER,
+    EMPLOYER_STATE_DISCARD,
+    EMPLOYER_STATE_PHONE_INTERVIEW,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -336,12 +341,15 @@ def get_negotiations_messages(access_token: str, negotiation_id: str) -> Optiona
         return None
 
 
-def change_negotiation_collection_status_to_consider(
+def change_negotiation_collection_status(
     access_token: str, 
     negotiation_id: str,
+    target_collection_name: str
     ):
     try:
-        target_collection_name = EMPLOYER_STATE_CONSIDER
+        if target_collection_name is not EMPLOYER_STATE_CONSIDER or not EMPLOYER_STATE_DISCARD or not EMPLOYER_STATE_PHONE_INTERVIEW:
+            raise ValueError(f"target colleacton name:{target_collection_name} is not valid")
+
         url = f"https://api.hh.ru/negotiations/{target_collection_name}/{negotiation_id}"
         r = requests.put(
             url,
@@ -350,7 +358,7 @@ def change_negotiation_collection_status_to_consider(
         )
         r.raise_for_status()
         if r.status_code in (200, 201, 204):
-            logger.debug(f"change_negotiation_collection_status_to_consider: request successful: {r.text}")
+            logger.debug(f"change_negotiation_collection_status: '{target_collection_name}' request successful: {r.text}")
             # Some HH endpoints return 204 No Content or empty body on success
             if r.text and r.headers.get("Content-Type", "").startswith("application/json"):
                 try:
@@ -359,14 +367,15 @@ def change_negotiation_collection_status_to_consider(
                     pass
             return {"status": "success", "code": r.status_code}
         else:
-            logger.error(f"change_negotiation_collection_status_to_consider: request failed: {r.status_code} {r.text}")
+            logger.error(f"change_negotiation_collection_status: '{target_collection_name}' request failed: {r.status_code} {r.text}")
             return None
     except Exception as e:
         if isinstance(e, requests.exceptions.HTTPError):
-            logger.error(f"HTTP error change_negotiation_collection_status_to_consider: {e.response.status_code} - {e.response.text}")
+            logger.error(f"HTTP error change_negotiation_collection_status: request '{target_collection_name}' / {e.response.status_code} - {e.response.text}")
         else:
-            logger.error(f"Error change_negotiation_collection_status_to_consider: {e}", exc_info=True)
+            logger.error(f"Error change_negotiation_collection_status: request '{target_collection_name}' / {e}", exc_info=True)
         return None
+
 
 
 def send_negotiation_message(access_token: str, negotiation_id: str, user_message: str):

@@ -99,7 +99,7 @@ from services.hh_service import (
     filter_open_employer_vacancies,
     get_vacancy_description_from_hh,
     get_negotiations_collection_with_status_response,
-    change_negotiation_collection_status_to_consider,
+    change_negotiation_collection_status,
     send_negotiation_message,
     get_resume_info,
     get_available_employer_states_and_collections_negotiations,
@@ -1282,6 +1282,10 @@ async def source_resumes_triggered_by_admin_command(bot_user_id: str) -> None:
             try:
                 resume_file_path = new_resume_data_dir / f"resume_{resume_id}.json"
                 resume_data = get_resume_info(access_token=access_token, resume_id=resume_id)
+
+                # Send message to applicant with link to bot rightaway
+                await send_link_to_bot_to_applicant_command(bot_user_id=bot_user_id, resume_id=resume_id)
+                
                 # Write resume data JSON into resume_file_path
                 create_json_file_with_dictionary_content(file_path=str(resume_file_path), content_to_write=resume_data)
                 logger.debug(f"source_resumes_triggered_by_admin_command: successfully downloaded resume {resume_id} to file: {resume_file_path}")
@@ -1459,12 +1463,6 @@ async def resume_analysis_from_ai_to_user_sort_resume(
             value=ai_analysis_result
         )
         # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
-
-        # Send message to applicant
-        await send_message_to_applicant_command(bot_user_id=bot_user_id, resume_id=resume_id)
-        
-        # Change employer state
-        await change_employer_state_command(bot_user_id=bot_user_id, resume_id=resume_id)
         
         # Sort resume based on final score
         resume_final_score = int(ai_analysis_result.get("final_score", 0))
@@ -1477,6 +1475,10 @@ async def resume_analysis_from_ai_to_user_sort_resume(
                 key="resume_sorting_status",
                 value="passed"
             )
+
+            # Change employer state to CONSIDER
+            await change_employer_state_command(bot_user_id=bot_user_id, resume_id=resume_id, target_collection_name=EMPLOYER_STATE_CONSIDER)
+            
             # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
         else:
             shutil.move(resume_json_path, failed_resume_data_path)
@@ -1487,13 +1489,17 @@ async def resume_analysis_from_ai_to_user_sort_resume(
                 key="resume_sorting_status",
                 value="failed"
             )
+
+            # Change employer state to DISCARD
+            await change_employer_state_command(bot_user_id=bot_user_id, resume_id=resume_id, target_collection_name=EMPLOYER_STATE_DISCARD)
+
             # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
     except Exception as e:
         logger.error(f"Failed to process resume analysis for {resume_id}: {e}", exc_info=True)
         raise
 
 
-async def send_message_to_applicant_command(bot_user_id: str, resume_id: str) -> None:
+async def send_link_to_bot_to_applicant_command(bot_user_id: str, resume_id: str) -> None:
     # TAGS: [resume_related]
     """Sends message to applicant. Triggers 'change_employer_state_command'."""
     
@@ -1501,35 +1507,112 @@ async def send_message_to_applicant_command(bot_user_id: str, resume_id: str) ->
     
     access_token = get_access_token_from_records(bot_user_id=bot_user_id)
     target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
-
-    # ----- SEND MESSAGE TO APPLICANT  -----
-
-    # Get negotiation ID from resume record
     negotiation_id = get_negotiation_id_from_resume_record(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id)
+
     # Create Telegram bot link for applicant
     tg_link = create_tg_bot_link_for_applicant(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_id=resume_id)
     negotiation_message_text = APPLICANT_MESSAGE_TEXT_WITHOUT_LINK + f"{tg_link}"
-    logger.debug(f"Sending message to applicant for negotiation ID: {negotiation_id}")
+    
+    # ----- SEND MESSAGE TO APPLICANT  -----
+
     try:
+        logger.debug(f"send_link_to_bot_to_applicant_command: Sending message to applicant for negotiation ID: {negotiation_id}")
         send_negotiation_message(access_token=access_token, negotiation_id=negotiation_id, user_message=negotiation_message_text)
-        logger.info(f"Message to applicant for negotiation ID: {negotiation_id} has been successfully sent")
+        logger.info(f"send_link_to_bot_to_applicant_command: Message to applicant for negotiation ID: {negotiation_id} has been successfully sent")
     except Exception as send_err:
-        logger.error(f"Failed to send message for negotiation ID {negotiation_id}: {send_err}", exc_info=True)
+        logger.error(f"send_link_to_bot_to_applicant_command: Failed to send message for negotiation ID {negotiation_id}: {send_err}", exc_info=True)
         # stop method execution in this case, because no need to update resume_records and negotiations status
         return
 
     # ----- UPDATE RESUME_RECORDS file with new status of request to shoot resume video -----
 
-    new_status_of_request_to_shoot_resume_video = "yes"
-    update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id, key="request_to_shoot_resume_video_sent", value=new_status_of_request_to_shoot_resume_video)
+    update_resume_record_with_top_level_key(
+        bot_user_id=bot_user_id,
+        vacancy_id=target_vacancy_id,
+        resume_record_id=resume_id,
+        key="link_to_tg_bot_sent",
+        value="yes"
+    )
     # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
 
 
-async def change_employer_state_command(bot_user_id: str, resume_id: str) -> None:
+async def send_interview_invitation_to_applicant_command(bot_user_id: str, resume_id: str) -> None:
+    # TAGS: [resume_related]
+    """Sends interview invitation to applicant. Triggers 'change_employer_state_command'."""
+    
+    # ----- IDENTIFY USER and pull required data from records -----
+    
+    access_token = get_access_token_from_records(bot_user_id=bot_user_id)
+    target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
+    negotiation_id = get_negotiation_id_from_resume_record(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id)
+
+    message_text = APPLICANT_INTERVIEW_INVITATION_TEXT
+    
+    # ----- SEND MESSAGE TO APPLICANT  -----
+
+    try:
+        logger.debug(f"send_interview_invitation_to_applicant_command: Sending invitation to applicant for negotiation ID: {negotiation_id}")
+        send_negotiation_message(access_token=access_token, negotiation_id=negotiation_id, user_message=message_text)
+        logger.info(f"send_interview_invitation_to_applicant_command: Invitation to applicant for negotiation ID: {negotiation_id} has been successfully sent")
+    except Exception as send_err:
+        logger.error(f"send_interview_invitation_to_applicant_command: Failed to send invitation for negotiation ID {negotiation_id}: {send_err}", exc_info=True)
+        # stop method execution in this case, because no need to update resume_records and negotiations status
+        return
+
+    # ----- UPDATE RESUME_RECORDS file with new status of request to shoot resume video -----
+
+    update_resume_record_with_top_level_key(
+        bot_user_id=bot_user_id,
+        vacancy_id=target_vacancy_id,
+        resume_record_id=resume_id,
+        key="interview_invitation_sent",
+        value="yes"
+    )
+    # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
+
+
+async def send_rejection_interview_invitation_to_applicant_command(bot_user_id: str, resume_id: str) -> None:
+    # TAGS: [resume_related]
+    """Sends rejection interview invitation to applicant. Triggers 'change_employer_state_command'."""
+    
+    # ----- IDENTIFY USER and pull required data from records -----
+    
+    access_token = get_access_token_from_records(bot_user_id=bot_user_id)
+    target_vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
+    negotiation_id = get_negotiation_id_from_resume_record(bot_user_id=bot_user_id, vacancy_id=target_vacancy_id, resume_record_id=resume_id)
+
+    message_text = APPLICANT_REJECTION_INTERVIEW_INVITATION_TEXT
+    
+    # ----- SEND MESSAGE TO APPLICANT  -----
+
+    try:
+        logger.debug(f"send_rejection_interview_invitation_to_applicant_command: Sending invitation to applicant for negotiation ID: {negotiation_id}")
+        send_negotiation_message(access_token=access_token, negotiation_id=negotiation_id, user_message=message_text)
+        logger.info(f"send_rejection_interview_invitation_to_applicant_command: Invitation to applicant for negotiation ID: {negotiation_id} has been successfully sent")
+    except Exception as send_err:
+        logger.error(f"send_rejection_interview_invitation_to_applicant_command: Failed to send invitation for negotiation ID {negotiation_id}: {send_err}", exc_info=True)
+        # stop method execution in this case, because no need to update resume_records and negotiations status
+        return
+
+    # ----- UPDATE RESUME_RECORDS file with new status of request to shoot resume video -----
+
+    update_resume_record_with_top_level_key(
+        bot_user_id=bot_user_id,
+        vacancy_id=target_vacancy_id,
+        resume_record_id=resume_id,
+        key="interview_invitation_sent",
+        value="no"
+    )
+    # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
+
+
+
+
+async def change_employer_state_command(bot_user_id: str, resume_id: str, target_collection_name: str) -> None:
     # TAGS: [resume_related]
     """Trigger send message to applicant command handler - allows users to send message to applicant."""
 
-    logger.info(f"change_employer_state_command started. user_id: {bot_user_id}")
+    logger.info(f"change_employer_state_command started. user_id: {bot_user_id} / target_state: {target_collection_name}")
     
     # ----- IDENTIFY USER and pull required data from records -----
     
@@ -1540,13 +1623,14 @@ async def change_employer_state_command(bot_user_id: str, resume_id: str) -> Non
    # ----- CHANGE EMPLOYER STATE  -----
 
     #await update.message.reply_text(f"Изменяю статус приглашения кандидата на {NEW_EMPLOYER_STATE}...")
-    logger.debug(f"Changing collection status of negotiation ID: {negotiation_id} to {EMPLOYER_STATE_CONSIDER}")
+    logger.debug(f"Changing collection status of negotiation ID: {negotiation_id} to {target_collection_name}")
     try:
-        change_negotiation_collection_status_to_consider(
+        change_negotiation_collection_status(
             access_token=access_token,
-            negotiation_id=negotiation_id
+            negotiation_id=negotiation_id,
+            target_collection_name=target_collection_name
         )
-        logger.info(f"Collection status of negotiation ID: {negotiation_id} has been successfully changed to {EMPLOYER_STATE_CONSIDER}")
+        logger.info(f"Collection status of negotiation ID: {negotiation_id} has been successfully changed to {target_collection_name}")
     except Exception as status_err:
         logger.error(f"Failed to change collection status for negotiation ID {negotiation_id}: {status_err}", exc_info=True)
 
@@ -1590,6 +1674,7 @@ async def update_resume_records_with_fresh_video_from_applicants_triggered_by_ad
     except Exception as e:
         logger.error(f"update_resume_records_with_fresh_video_from_applicants_triggered_by_admin_command: Failed. user_id {bot_user_id}: {e}", exc_info=True)
         raise
+
 
 async def recommend_resumes_triggered_by_admin_command(bot_user_id: str, application: Application) -> None:
     # TAGS: [recommendation_related]
@@ -1666,17 +1751,22 @@ async def recommend_resumes_triggered_by_admin_command(bot_user_id: str, applica
                 # ----- SEND BUTTON TO INVITE APPLICANT TO INTERVIEW -----
                 # cannot use "questionnaire_service.py", because requires update and context objects
                 
-                # Create inline keyboard with invite button
+                # Create inline keyboard with yes/no buttons
                 if not resume_id:
                     raise ValueError(f"Missing required resume_id for invite button callback_data")
                 
-                callback_data = f"{INVITE_TO_INTERVIEW_CALLBACK_PREFIX}:{resume_id}"
+                yes_callback_data = f"{INVITE_TO_INTERVIEW_CALLBACK_PREFIX}:{resume_id}:yes"
+                no_callback_data = f"{INVITE_TO_INTERVIEW_CALLBACK_PREFIX}:{resume_id}:no"
                 
-                invite_button = InlineKeyboardButton(
-                    text=BTN_INVITE_TO_INTERVIEW,
-                    callback_data=callback_data
+                yes_button = InlineKeyboardButton(
+                    text="Да",
+                    callback_data=yes_callback_data
                 )
-                keyboard = InlineKeyboardMarkup([[invite_button]])
+                no_button = InlineKeyboardButton(
+                    text="Нет",
+                    callback_data=no_callback_data
+                )
+                keyboard = InlineKeyboardMarkup([[yes_button, no_button]])
                 await application.bot.send_message(
                     chat_id=int(bot_user_id),
                     text=f"Хотите пригласить кандидата на интервью?", 
@@ -1714,33 +1804,67 @@ async def handle_invite_to_interview_button(update: Update, context: ContextType
         # ----- EXTRACT DATA from callback_data -----
 
         parts = callback_data.split(":")
-        if len(parts) != 2:
+        if len(parts) != 3:
             raise ValueError(f"Invalid callback_data format for invite to interview: {callback_data}")
         
         # Unpack (destruct) tuple to assign values from a list to variables.
-        callback_prefix, resume_id = parts
+        callback_prefix, resume_id, answer = parts
         
-        # Get user_id and vacancy_id from records (user_id is bot_user_id from update)
-        user_id = bot_user_id
-        vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
-        vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
+        # Only proceed if answer is "yes"
+        if answer != "yes":
+
+            # Get user_id and vacancy_id from records (user_id is bot_user_id from update)
+            user_id = bot_user_id
+            vacancy_id = get_target_vacancy_id_from_records(record_id=bot_user_id)
+            vacancy_name = get_target_vacancy_name_from_records(record_id=bot_user_id)
+
+            update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_accepted", value="yes")
+            # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
+            logger.info(f"recommend_resumes_triggered_by_admin_command: Resume records for resume {resume_id} has been successfully updated with recommended status 'yes'")
+
+            # ----- INFORM APPLICANT and CHANGE EMPLOYER STATE to PHONE INTERVIEW -----
+
+            await send_interview_invitation_to_applicant_command(bot_user_id=bot_user_id, resume_id=resume_id)
+            await change_employer_state_command(bot_user_id=bot_user_id, resume_id=resume_id, target_collection_name=EMPLOYER_STATE_PHONE_INTERVIEW)
+
+            # Confirm to user (keyboard already removed by handle_answer())
+            await send_message_to_user(update, context, text=INVITE_TO_INTERVIEW_SENT_TEXT)
+
+        if answer == "no":
+
+            update_resume_record_with_top_level_key(bot_user_id=bot_user_id, vacancy_id=vacancy_id, resume_record_id=resume_id, key="resume_accepted", value="no")
+            # If cannot update resume records, ValueError is raised from method: update_resume_record_with_top_level_key()
+            logger.info(f"recommend_resumes_triggered_by_admin_command: Resume records for resume {resume_id} has been successfully updated with recommended status 'no'")
+
+            await send_rejection_interview_invitation_to_applicant_command(bot_user_id=bot_user_id, resume_id=resume_id)
+            await change_employer_state_command(bot_user_id=bot_user_id, resume_id=resume_id, target_collection_name=EMPLOYER_STATE_DISCARD)
+
+        else: 
+            raise ValueError(f"Invalid answer for invite to interview: {answer}")
 
         # ----- SEND NOTIFICATION TO ADMIN -----
             
         if context.application:
+
+            if answer == "yes":
+                interview_invitation_status = "✅ хочет"
+            if answer == "no":
+                interview_invitation_status = "❌ не хочет"
+            else:
+                raise ValueError(f"Invalid answer for invite to interview: {answer}")
+
             admin_message = (
                 f"📞 Пользователь {user_id}.\n"
-                f"хочет пригласить кандидата {resume_id} на интервью.\n"
+                f"{interview_invitation_status} пригласить кандидата {resume_id} на интервью.\n"
                 f"Вакансия: {vacancy_id}: {vacancy_name}.\n"
                 f"Резюме кандидата: {resume_id}."
             )
+
             await send_message_to_admin(
                 application=context.application,
                 text=admin_message
             )
             
-            # Confirm to user (keyboard already removed by handle_answer())
-            await send_message_to_user(update, context, text=INVITE_TO_INTERVIEW_SENT_TEXT)
         else:
             raise ValueError(f"Invalid callback_data format for invite to interview: {callback_data}")
     except Exception as e:
@@ -1752,7 +1876,6 @@ async def handle_invite_to_interview_button(update: Update, context: ContextType
                 application=context.application,
                 text=f"⚠️ Error handling invite to interview: {e}\nUser ID: {bot_user_id if 'bot_user_id' in locals() else 'unknown'}"
             )
-
 
 
 ########################################################################################

@@ -192,11 +192,12 @@ def create_record_for_new_resume_id_in_resume_records(bot_user_id: str, vacancy_
             "email": "",
             "ai_analysis": {},
             "resume_sorting_status": "new",
-            "request_to_shoot_resume_video_sent": "no",
-            "resume_video_received": "no",
+            "link_to_tg_bot_sent": "",
+            "resume_video_received": "",
             "resume_video_path": "",
-            "resume_recommended": "no",
-            "resume_accepted": "no"
+            "resume_recommended": "",
+            "resume_accepted": "",
+            "interview_invitation_sent": ""
         }
         resume_records_file_path.write_text(json.dumps(resume_records, ensure_ascii=False, indent=2), encoding="utf-8")
         logger.info(f"{resume_records_file_path} has been successfully created with new resume_record: {resume_record_id_str}")
