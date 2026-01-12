@@ -17,9 +17,8 @@ def setup_logging(max_bytes: int = 20 * 1024 * 1024, backup_count: int = 20):
 
     # ------------- CREATION OF LOGGING FILE -------------
 
-    data_dir = Path(os.getenv("USERS_DATA_DIR", "/users_data"))
-    logs_dir = data_dir / "logs" / "applicant_bot_logs"
-    # Create logs directory and all parent directories if they don't exist
+    USERS_DATA_DIR = os.getenv("USERS_DATA_DIR", "/tmp/users_data")
+    logs_dir = Path(USERS_DATA_DIR) / "logs" / "applicant_bot_logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     # Each application start will create a new log file path with timestamp (to avoid overwriting the same file)
     log_filename = logs_dir / f"applicant_bot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"

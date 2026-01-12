@@ -1,14 +1,12 @@
 import asyncio
 import logging
 import os
-from dotenv import load_dotenv
 
 from manager_bot import (
-    create_manager_application, 
-    ai_task_queue, 
-    start_command, 
+    create_manager_application,
+    ai_task_queue,
+    start_command,
 )
-
 from admin import (
     admin_get_managers_command,
     admin_get_manager_status_command,
@@ -22,7 +20,6 @@ from admin import (
     admin_send_message_command,
     admin_pull_file_command,
 )
-
 from services.data_service import (
     create_data_directory,
     create_users_records_file,
@@ -33,17 +30,14 @@ from services.constants import (
     WELCOME_TEXT_WHEN_STARTING_BOT,
 )
 from services.logging_service import setup_logging
+from telegram.ext import CommandHandler
+from manager_bot.config import TELEGRAM_MANAGER_BOT_TOKEN
 
-# required for manager menu
-from telegram.ext import CommandHandler, MessageHandler, filters, ContextTypes
-from telegram import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-
-# Create logger at module level (will be configured later in setup_logging)
 logger = logging.getLogger(__name__)
 
-# ----------- SETUP OF MENU with buttons that constantly persistent for user -----------
+# ----------- MENU -------------
+from telegram.ext import ReplyKeyboardMarkup, KeyboardButton
 
-# Use 'ReplyKeyboardMarkup' to show buttons all the time
 BOTTOM_MENU_KB = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(BTN_MENU), KeyboardButton(BTN_FEEDBACK)]
@@ -52,42 +46,28 @@ BOTTOM_MENU_KB = ReplyKeyboardMarkup(
     is_persistent=True,
 )
 
-async def _show_bottom_menu_on_start(update, context: ContextTypes.DEFAULT_TYPE):
-    """Handler to show manager menu when /start command executed"""
+
+async def _show_bottom_menu_on_start(update, context):
     if update.effective_message:
-
-        # Show the bottom menu keyboard
         await update.effective_message.reply_text(WELCOME_TEXT_WHEN_STARTING_BOT, reply_markup=BOTTOM_MENU_KB)
-
-        # Call the main start_command from manager_bot
         await start_command(update, context)
 
 
-# ----------- LOADING OF ENVIRONMENT VARIABLES from .env file -----------
-
-load_dotenv()
-
-# set up global flag that helps to avoid multiple shutdown signals (which might screw up the shutdown sequence)
+# ----------- GLOBAL SHUTDOWN FLAG -----------
 _shutting_down = False
 
+
 async def run_manager_bot() -> None:
-    """Starts
-    1) the manager bot
-    2) task queue worker for AI related tasks"""
-    
     global _shutting_down
 
-    # ------------- SETUP OF THE APPLICATION -------------
-
-    manager_token = os.getenv("HRVIBE_MANAGER_BOT_TOKEN")
-    if not manager_token:
-        raise RuntimeError("HRVIBE_MANAGER_BOT_TOKEN not found in environment variables")
-    application = create_manager_application(manager_token)
+    application = create_manager_application(TELEGRAM_MANAGER_BOT_TOKEN)
     application.add_handler(CommandHandler("start", _show_bottom_menu_on_start), group=-1)
+
+    # Admin handlers
     application.add_handler(CommandHandler("admin_get_managers", admin_get_managers_command))
     application.add_handler(CommandHandler("admin_get_manager_status", admin_get_manager_status_command))
     application.add_handler(CommandHandler("admin_analyze_criterias", admin_analyze_sourcing_criterais_command))
-    application.add_handler(CommandHandler("admin_send_criterias_to_user", admin_send_sourcing_criterais_to_user_command))  
+    application.add_handler(CommandHandler("admin_send_criterias_to_user", admin_send_sourcing_criterais_to_user_command))
     application.add_handler(CommandHandler("admin_update_neg_coll", admin_update_negotiations_command))
     application.add_handler(CommandHandler("admin_get_fresh_resumes", admin_get_fresh_resumes_command))
     application.add_handler(CommandHandler("admin_analyze_resumes", admin_anazlyze_resumes_command))
@@ -95,85 +75,54 @@ async def run_manager_bot() -> None:
     application.add_handler(CommandHandler("admin_recommend", admin_recommend_resumes_command))
     application.add_handler(CommandHandler("admin_send_message", admin_send_message_command))
     application.add_handler(CommandHandler("admin_pull_file", admin_pull_file_command))
-    
-    # ------------- STARTING OF THE TASK QUEUE WORKER for AI related tasks-------------
 
     ai_task_queue.start_worker()
     logger.info("Task queue worker to process AI related tasks is started.")
-    
-    # ------------- INITIALIZATION AND STARTING OF THE APPLICATION -------------
 
     await application.initialize()
     await application.start()
- 
-    try:
-        
-        # ------------- START POLLING to get updates from  Telegram API -------------
 
+    try:
         await application.updater.start_polling()
         logger.info("Bot is now polling for updates. Press Ctrl+C to stop.")
-        # Polling until shutdown signal is received
         await asyncio.Event().wait()
 
-    # ------------- SHUTDOWN OF THE APPLICATION -------------
-
-    # Cancelling of polling by user (Ctrl+C)
     except (KeyboardInterrupt, asyncio.CancelledError):
-        # Set the flag to True to avoid multiple shutdown signals
         if not _shutting_down:
             _shutting_down = True
     finally:
         if _shutting_down:
             logger.info("\nApplication is shutting down gracefully...")
 
-            # ------------- SHUTDOWN OF THE TASK QUEUE WORKER for AI related tasks -------------
-
             try:
-                # Stop task queue worker that processes AI related tasks
                 await ai_task_queue.stop_worker(wait=True)
                 logger.info("Task queue worker that processes AI related tasks is stopped.")
             except Exception as e:
-                logger.error(f"Error stopping task queue worker that processes AI related tasks: {e}")
-            
-            # ------------- SHUTDOWN OF THE APPLICATION in proper sequence -------------  
-            
+                logger.error(f"Error stopping task queue worker: {e}")
+
             try:
-                # Stop getting updates from Telegram API
-                await application.updater.stop()  # Stop the updater first!
+                await application.updater.stop()
             except Exception:
-                pass  # Ignore errors during updater stop
+                pass
             try:
-                # Stop the application
                 await application.stop()
             except Exception:
-                pass  # Ignore errors during stop
+                pass
             try:
-                # Shutdown the application and clear all resources
                 await application.shutdown()
             except Exception:
-                pass  # Ignore errors during shutdown
-            
+                pass
+
             logger.info("Application graceful shut down is completed.")
 
 
 def main():
-    """Main entry point"""
-
-    # ------------- SETUP LOGGING -------------
-
-    # setup_logging() calls logging.basicConfig() that configures the root logger (the top-level logger in Python's hierarchy).
     setup_logging()
     logger.info("Telegram Bot for Managers is running")
 
-    # ------------- SETUP OF THE DATA DIRECTORY and USER RECORDS FILE -------------
-
-    create_users_records_file() # will be skipped if exist
-
-    # ------------- STARTING OF THE MANAGER BOT -------------
+    create_users_records_file()
 
     try:
-        #use "asyncio.run" to start the asynchronous function run_manager_bot() from synchronous main() function
-        # this will create new event loop => process all asynchronous tasks in the background => close the event loop after completion
         asyncio.run(run_manager_bot())
     except KeyboardInterrupt:
         logger.info("\nTelegram Bot for Managers has been stopped by user.")
